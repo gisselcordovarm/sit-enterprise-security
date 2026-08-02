@@ -49,13 +49,30 @@ export default function Dashboard() {
     }));
   };
 
+  // Tendencia real calculada desde los datos de la semana ya cargada:
+  // compara el promedio del 1er bloque de días contra el 2do. Sin valores fijos.
+  const seriesTrend = (series) => {
+    if (!series || series.length < 2) return { label: 'Estable', up: null };
+    const mid = Math.floor(series.length / 2);
+    const avg = (arr) => arr.reduce((s, r) => s + Number(r.value || 0), 0) / Math.max(arr.length, 1);
+    const before = avg(series.slice(0, mid));
+    const after = avg(series.slice(mid));
+    if (before === 0 && after === 0) return { label: 'Estable', up: null };
+    const pct = before === 0 ? 100 : Math.round(((after - before) / before) * 100);
+    if (pct === 0) return { label: 'Estable', up: null };
+    return { label: `${pct > 0 ? '+' : ''}${pct}%`, up: pct > 0 };
+  };
+
   const chartData = buildChart(semana.op);
+  const tendOp = seriesTrend(semana.op);
+  const tendIng = seriesTrend(semana.ing);
+  const ingresoSemana = semana.ing.reduce((s, r) => s + Number(r.value || 0), 0);
 
   const kpiCards = [
-    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: '+14%', trendUp: true, blobBg: 'rgba(165, 216, 255, 0.5)' },
-    { title: 'Alarmas Activas', value: String(kpis.incidenciasAbiertas), trend: '-24%', trendUp: false, blobBg: 'rgba(131, 106, 157, 0.5)' },
-    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: '+5', trendUp: true, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
-    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Estable', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)' },
+    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: tendOp ? tendOp.label : 'Estable', trendUp: tendOp ? tendOp.up : null, blobBg: 'rgba(165, 216, 255, 0.5)' },
+    { title: 'Ingresos de la Semana', value: `$${kpis.pedidosTotales ? '' : ''}${ingresoSemana.toLocaleString()}`, trend: tendIng ? tendIng.label : 'Estable', trendUp: tendIng ? tendIng.up : null, blobBg: 'rgba(131, 106, 157, 0.5)' },
+    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: 'Real-time', trendUp: null, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
+    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Calculado', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)' },
   ];
 
   return (
