@@ -79,7 +79,7 @@ CREATE POLICY "profile_insert_own" ON public.profiles
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON public.profiles TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
-GRANT ALL ON public.is_admin() TO authenticated;
+GRANT ALL ON FUNCTION public.is_admin() TO authenticated;
 
 -- ---------- 5) Alta del usuario administrador ----------
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -109,10 +109,10 @@ BEGIN
     );
 
     INSERT INTO auth.identities (
-      provider_id, user_id, identity_data, provider,
+      id, provider_id, user_id, identity_data, provider,
       last_sign_in_at, created_at, updated_at
     ) VALUES (
-      v_email, v_id,
+      gen_random_uuid(), v_email, v_id,
       jsonb_build_object('sub', v_id::text, 'email', v_email, 'email_verified', true),
       'email', now(), now(), now()
     );
