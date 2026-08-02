@@ -17,12 +17,12 @@ export function timeAgo(dateStr) {
   if (hours < 24) return `Hace ${hours} hora${hours === 1 ? '' : 's'}`
   const days = Math.round(hours / 24)
   if (days < 7) return `Hace ${days} día${days === 1 ? '' : 's'}`
-  return d.toLocaleDateString('es-AR')
+  return d.toLocaleDateString('es-VE')
 }
 
 export function formatDate(dateStr) {
   if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('es-AR')
+  return new Date(dateStr).toLocaleDateString('es-VE')
 }
 
 // =============================================================================
@@ -615,7 +615,7 @@ export async function fetchLogs() {
       tipo: r.tipo,
       descripcion: r.descripcion,
       monto: Number(r.monto),
-      fecha: new Date(r.fecha).toLocaleString('es-AR'),
+      fecha: new Date(r.fecha).toLocaleString('es-VE'),
       status: r.status,
     }))
   }, () => [...demoLogs])
@@ -626,7 +626,7 @@ export async function registrarLog({ tipo, descripcion, monto = 0, status = 'Ver
     return {
       id: `LOG-${Math.floor(4505 + Math.random() * 50)}`,
       tipo, descripcion, monto, status,
-      fecha: new Date().toLocaleString('es-AR'),
+      fecha: new Date().toLocaleString('es-VE'),
     }
   }
   const { data, error } = await supabase
@@ -639,7 +639,7 @@ export async function registrarLog({ tipo, descripcion, monto = 0, status = 'Ver
     tipo: data.tipo,
     descripcion: data.descripcion,
     monto: Number(data.monto),
-    fecha: new Date(data.fecha).toLocaleString('es-AR'),
+    fecha: new Date(data.fecha).toLocaleString('es-VE'),
     status: data.status,
   }
 }
@@ -803,10 +803,9 @@ export async function fetchMetricasSemanales() {
       })),
     }
   }, () => {
-    const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
     return {
-      op: demoSemana.map((r, i) => ({ label: labels[i], value: r.servicios })),
-      ing: demoSemana.map((r, i) => ({ label: labels[i], value: r.ventas })),
+      op: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.servicios })),
+      ing: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.ventas })),
     }
   })
 }
