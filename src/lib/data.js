@@ -655,13 +655,71 @@ export async function fetchIncidencias() {
     if (error) throw error
     return (data || []).map((r) => ({
       id: `INC-${r.id_incidencia}`,
+      dbId: r.id_incidencia,
       client: r.cliente_nombre,
       type: r.tipo,
       date: timeAgo(r.fecha),
       status: r.estado,
       resolution: r.resolucion || 'Pendiente de resolución',
+      descripcion: r.descripcion || '',
     }))
   }, () => [...demoIncidencias])
+}
+
+// Crea una nueva incidencia postventa.
+export async function crearIncidencia({ client, tipo, descripcion }) {
+  const payload = {
+    cliente_nombre: client,
+    tipo,
+    descripcion,
+    estado: 'Abierto',
+  }
+  if (!supabase) {
+    return {
+      id: `INC-${Math.floor(8805 + Math.random() * 50)}`,
+      dbId: null,
+      client,
+      type: tipo,
+      descripcion,
+      date: 'Ahora',
+      status: 'Abierto',
+      resolution: 'Pendiente de resolución',
+    }
+  }
+  const { data, error } = await supabase.from('incidencias').insert(payload).select('*').single()
+  if (error) throw error
+  return {
+    id: `INC-${data.id_incidencia}`,
+    dbId: data.id_incidencia,
+    client: data.cliente_nombre,
+    type: data.tipo,
+    descripcion: data.descripcion || '',
+    date: timeAgo(data.fecha),
+    status: data.estado,
+    resolution: data.resolucion || 'Pendiente de resolución',
+  }
+}
+
+// Actualiza el estado y/o la resolución de una incidencia (Resolver/Cerrar).
+export async function actualizarIncidencia(id, { estado, resolucion }) {
+  const patch = { estado }
+  if (resolucion != null) patch.resolucion = resolucion
+  if (!supabase) {
+    const target = demoIncidencias.find((i) => i.id === id)
+    if (target) {
+      target.status = estado
+      if (resolucion != null) target.resolution = resolucion
+    }
+    return { id, status: estado, resolution: resolucion }
+  }
+  const { data, error } = await supabase
+    .from('incidencias').update(patch).eq('id_incidencia', id).select('*').single()
+  if (error) throw error
+  return {
+    id: `INC-${data.id_incidencia}`,
+    status: data.estado,
+    resolution: data.resolucion || '',
+  }
 }
 
 export async function fetchEncuestas() {

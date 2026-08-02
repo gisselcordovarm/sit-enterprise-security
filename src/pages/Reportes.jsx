@@ -35,6 +35,7 @@ export default function Reportes() {
   const [hasta, setHasta] = useState(() => hoyMenos(0))
   const [sqlAbierta, setSqlAbierta] = useState('')
   const [nota, setNota] = useState('')
+  const [exportando, setExportando] = useState('')
 
   useEffect(() => {
     let active = true
@@ -75,46 +76,59 @@ export default function Reportes() {
   }
 
   const exportRango = async () => {
+    if (exportando) return
     if (!desde || !hasta || hasta < desde) {
       setNota('Verifique el rango de fechas antes de generar el PDF.')
       return
     }
-    const data = await fetchReporteSemanal({ desde, hasta })
-    if (data.length === 0) {
-      setNota('Sin pedidos registrados en el rango seleccionado.')
-      return
+    setExportando('rango')
+    try {
+      const data = await fetchReporteSemanal({ desde, hasta })
+      if (data.length === 0) {
+        setNota('Sin pedidos registrados en el rango seleccionado.')
+        return
+      }
+      setSemanal(data)
+      generarPdfReporteSemanal({ filas: data, desde, hasta })
+      setNota('Reporte semanal de pedidos generado en .PDF.')
+    } catch {
+      setNota('No se pudo generar el PDF del reporte semanal.')
+    } finally {
+      setExportando('')
     }
-    setSemanal(data)
-    generarPdfReporteSemanal({
-      filas: data,
-      desde,
-      hasta,
-    })
-    setNota('Reporte semanal de pedidos generado en .PDF.')
   }
 
-  const exportInventario = () => {
+  const wrapExport = (key, fn, okMsg) => async () => {
+    if (exportando) return
+    setExportando(key)
+    try {
+      fn()
+      setNota(okMsg)
+    } catch {
+      setNota('No se pudo generar el archivo. Verificá la conexión.')
+    } finally {
+      setExportando('')
+    }
+  }
+
+  const exportInventario = wrapExport('inventario', () => {
     exportarXLSX('Listado_inventario', ['Código', 'Componente', 'Stock', 'Mínimo', 'Auto-reorder', 'Reposición'],
       inventario.map((i) => [i.id, i.name, i.stock, i.minThreshold, i.autoReorder ? 'Sí' : 'No', i.reorderStatus]),
       { colWidths: [12, 30, 10, 10, 14, 14], moneda: [] })
-    setNota('Listado de inventario exportado a Excel (.XLS).')
-  }
+  }, 'Listado de inventario exportado a Excel (.XLS).')
 
-  const exportTecnicos = () => {
+  const exportTecnicos = wrapExport('tecnicos', () => {
     exportarCSV('Listado_tecnicos_disponibles', ['ID', 'Nombre', 'Zona/Estado', 'Carga de trabajo', 'Disponibilidad'],
       tecnicos.map((t) => [t.id, t.name, t.zone, t.workload, t.status === 'Activo' ? 'Disponible' : t.status]))
-    setNota('Listado de técnicos disponibles exportado a .CSV.')
-  }
+  }, 'Listado de técnicos disponibles exportado a .CSV.')
 
-  const exportFacturaPdf = (inv) => {
-    generarPdfFactura(inv)
-    setNota('Factura impresa en .PDF.')
-  }
+  const exportFacturaPdf = wrapExport('pdf',
+    (inv) => generarPdfFactura(inv),
+    'Factura impresa en .PDF.')
 
-  const exportMemoriaSql = () => {
+  const exportMemoriaSql = wrapExport('memoria', () => {
     generarPdfConsultaSQL([...CONSULTAS_REPORTES, CONSULTA_METRICAS_SEMANALES])
-    setNota('PDF de memoria con las consultas SQL generado.')
-  }
+  }, 'PDF de memoria con las consultas SQL generado.')
 
   const abreSql = (id) => setSqlAbierta((v) => (v === id ? '' : id))
 
@@ -155,9 +169,9 @@ export default function Reportes() {
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
             {consultando ? 'Consultando...' : 'Consultar rango'}
           </button>
-          <button className="btn btn-primary" onClick={exportRango}>
+          <button className="btn btn-primary" onClick={exportRango} disabled={!!exportando}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>picture_as_pdf</span>
-            Generar PDF
+            {exportando === 'rango' ? 'Generando...' : 'Generar PDF'}
           </button>
         </div>
 
@@ -189,9 +203,9 @@ export default function Reportes() {
               <h2 className="headline-md text-on-surface">Listado de Inventario (.XLS)</h2>
               <span className="body-sm text-on-surface-variant">{inventario.length} componente(s) en existencias</span>
             </div>
-            <button className="btn btn-secondary" onClick={exportInventario}>
+            <button className="btn btn-secondary" onClick={exportInventario} disabled={!!exportando}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_on</span>
-              Exportar Excel
+              {exportando === 'inventario' ? 'Exportando...' : 'Exportar Excel'}
             </button>
           </div>
           <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
@@ -219,9 +233,9 @@ export default function Reportes() {
               <h2 className="headline-md text-on-surface">Listado de Técnicos (.CSV)</h2>
               <span className="body-sm text-on-surface-variant">{tecnicos.length} técnico(s) enlistados</span>
             </div>
-            <button className="btn btn-secondary" onClick={exportTecnicos}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
-              Exportar CSV
+<button className="btn btn-secondary" onClick={exportTecnicos} disabled={!!exportando}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+              {exportando === 'tecnicos' ? 'Exportando...' : 'Exportar CSV'}
             </button>
           </div>
           <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
@@ -288,9 +302,9 @@ export default function Reportes() {
             <h2 className="headline-md text-on-surface">Consultas SQL usadas en los reportes</h2>
             <span className="body-sm text-on-surface-variant">Mostradas en pantalla e incluidas en el PDF de memoria.</span>
           </div>
-          <button className="btn btn-primary" onClick={exportMemoriaSql}>
+          <button className="btn btn-primary" onClick={exportMemoriaSql} disabled={!!exportando}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>
-            Descargar PDF con SQL
+            {exportando === 'memoria' ? 'Generando...' : 'Descargar PDF con SQL'}
           </button>
         </div>
         {[...CONSULTAS_REPORTES, CONSULTA_METRICAS_SEMANALES].map((q) => (

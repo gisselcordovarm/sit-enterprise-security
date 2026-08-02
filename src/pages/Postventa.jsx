@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import DataStatus from '../components/common/DataStatus';
-import { fetchIncidencias, fetchEncuestas, registrarEncuesta } from '../lib/data';
+import {
+  fetchIncidencias, fetchEncuestas, registrarEncuesta,
+  crearIncidencia, actualizarIncidencia,
+} from '../lib/data';
 
 export default function Postventa() {
   const [incidents, setIncidents] = useState([]);
@@ -13,6 +16,14 @@ export default function Postventa() {
   const [newRating, setNewRating] = useState('10');
   const [newComment, setNewComment] = useState('');
   const [alertMsg, setAlertMsg] = useState(null);
+
+  // Incidencia states
+  const [inciClient, setInciClient] = useState('');
+  const [inciType, setInciType] = useState('Desconexión de Canal');
+  const [inciDesc, setInciDesc] = useState('');
+  const [inciResol, setInciResol] = useState('');
+  const [busyIncidencia, setBusyIncidencia] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -40,28 +51,81 @@ export default function Postventa() {
     return Math.round(((promoters - detractors) / surveys.length) * 100);
   };
 
-  const slaCompliance = '94.2%';
+  // SLA: porcentaje de incidencias cerradas sobre el total (proxy simple).
+  const openCount = incidents.filter((inc) => inc.status !== 'Cerrado').length;
+  const slaCompliance = incidents.length
+    ? `${Math.round((((incidents.length - openCount) / incidents.length) * 100) * 10) / 10}%`
+    : '—';
 
   // Submit survey
   const handleSurveySubmit = async (e) => {
     e.preventDefault();
     if (!newClient) return;
-
-    const ratingVal = parseInt(newRating);
-    const newSurvey = await registrarEncuesta({
-      cliente: newClient,
-      rating: ratingVal,
-      comentario: newComment,
-    });
-
-    setSurveys((prev) => [newSurvey, ...prev]);
-    setNewClient('');
-    setNewRating('10');
-    setNewComment('');
-    setAlertMsg({ type: 'success', text: 'Encuesta registrada. El indicador NPS del panel se ha recalculado.' });
+    try {
+      const ratingVal = parseInt(newRating);
+      const newSurvey = await registrarEncuesta({
+        cliente: newClient,
+        rating: ratingVal,
+        comentario: newComment,
+      });
+      setSurveys((prev) => [newSurvey, ...prev]);
+      setNewClient('');
+      setNewRating('10');
+      setNewComment('');
+      setAlertMsg({ type: 'success', text: 'Encuesta registrada. El indicador NPS del panel se ha recalculado.' });
+    } catch (e) {
+      console.error('Error al registrar encuesta:', e);
+      setAlertMsg({ type: 'error', text: 'No se pudo registrar la encuesta. Verificá la conexión e intentá de nuevo.' });
+    }
   };
 
-  const openCount = incidents.filter((inc) => inc.status !== 'Cerrado').length;
+  // Crear una incidencia
+  const handleCreateIncidencia = async (e) => {
+    e.preventDefault();
+    if (inciClient.trim() === '') {
+      setAlertMsg({ type: 'error', text: 'Ingresá el nombre del cliente para registrar la incidencia.' });
+      return;
+    }
+    setBusyIncidencia(true);
+    setAlertMsg(null);
+    try {
+      const inc = await crearIncidencia({ client: inciClient, tipo: inciType, descripcion: inciDesc });
+      setIncidents((prev) => [inc, ...prev]);
+      setInciClient('');
+      setInciDesc('');
+      setAlertMsg({ type: 'success', text: `Incidencia ${inc.id} registrada en estado Abierto.` });
+    } catch (err) {
+      console.error('Error al crear incidencia:', err);
+      setAlertMsg({ type: 'error', text: 'No se pudo registrar la incidencia.' });
+    } finally {
+      setBusyIncidencia(false);
+    }
+  };
+
+  // Resolver / Cerrar incidencia
+  const handleUpdateIncidencia = async (inc, estado) => {
+    if (updatingId) return;
+    setUpdatingId(inc.id);
+    setAlertMsg(null);
+    try {
+      const resolucion = estado === 'Cerrado'
+        ? inciResol.trim() || 'Resuelto por equipo de soporte.'
+        : inc.resolution || 'Investigando...';
+      const res = await actualizarIncidencia(inc.dbId ?? inc.id, { estado, resolucion });
+      setIncidents((prev) => prev.map((x) =>
+        x.id === inc.id
+          ? { ...x, status: res.status, resolution: res.resolution || x.resolution }
+          : x
+      ));
+      setInciResol('');
+      setAlertMsg({ type: 'success', text: `Incidencia ${inc.id} marcada como ${estado}.` });
+    } catch (err) {
+      console.error('Error al actualizar incidencia:', err);
+      setAlertMsg({ type: 'error', text: 'No se pudo actualizar la incidencia.' });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div>
@@ -126,6 +190,35 @@ export default function Postventa() {
             <span className="badge badge-info">{incidents.length} registros</span>
           </div>
 
+          <form onSubmit={handleCreateIncidencia} style={{ marginBottom: '16px', background: 'var(--surface-container-low)', padding: '12px', borderRadius: 'var(--radius-md)' }}>
+            <span className="label-caps text-primary" style={{ display: 'block', marginBottom: '8px' }}>Registrar nueva incidencia</span>
+            <div className="grid-2" style={{ gap: '10px', marginBottom: '0' }}>
+              <div className="form-group">
+                <label>Cliente</label>
+                <input className="form-input" placeholder="Ej. Banco Nación" value={inciClient} onChange={(e) => setInciClient(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Tipo de incidencia</label>
+                <select className="form-select" value={inciType} onChange={(e) => setInciType(e.target.value)}>
+                  <option>Desconexión de Canal</option>
+                  <option>Falsa Alarma Nocturna</option>
+                  <option>Baja Batería Respaldo</option>
+                  <option>Error Configuración App</option>
+                  <option>Fallo de Cámara / Equipo</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: '10px' }}>
+              <label>Descripción</label>
+              <input className="form-input" placeholder="Detalle breve del problema reportado" value={inciDesc} onChange={(e) => setInciDesc(e.target.value)} />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={busyIncidencia}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_alert</span>
+              {busyIncidencia ? 'Registrando...' : 'Crear Incidencia'}
+            </button>
+          </form>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {incidents.map((inc) => (
               <div
@@ -146,10 +239,28 @@ export default function Postventa() {
                     {inc.status}
                   </span>
                 </div>
-                <div style={{ background: 'var(--surface-container-low)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary-container)' }}>
+                <div style={{ background: 'var(--surface-container-low)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary-container)', marginBottom: '8px' }}>
                   <span className="label-caps text-on-surface-variant" style={{ fontSize: '9px', display: 'block' }}>Resolución / Observaciones:</span>
                   <p className="body-sm text-on-surface" style={{ fontSize: '13px', marginTop: '2px' }}>{inc.resolution}</p>
                 </div>
+                {inc.status !== 'Cerrado' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <input
+                      className="form-input"
+                      placeholder="Nota de resolución (opcional)"
+                      value={inciResol}
+                      onChange={(e) => setInciResol(e.target.value)}
+                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-secondary" style={{ padding: '5px 12px', fontSize: '12px' }} disabled={updatingId === inc.id} onClick={() => handleUpdateIncidencia(inc, 'Investigando')}>
+                        Investigando
+                      </button>
+                      <button className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: '12px', color: 'var(--success)' }} disabled={updatingId === inc.id} onClick={() => handleUpdateIncidencia(inc, 'Cerrado')}>
+                        Cerrar / Resolver
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

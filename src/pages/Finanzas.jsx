@@ -16,6 +16,7 @@ export default function Finanzas() {
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
   const [emailAlert, setEmailAlert] = useState(null);
+  const [generatingId, setGeneratingId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -111,22 +112,45 @@ export default function Finanzas() {
 
   // Generar factura para un pedido facturable (estado Instalado)
   const handleGenerateInvoice = async (facturable) => {
-    const invoice = await generarFactura(facturable);
-    setInvoices((prev) => [invoice, ...prev]);
-    setFacturables((prev) => prev.filter((f) => f.id_pedido !== facturable.id_pedido));
-    generatePDF(invoice);
-    await addLog('Ajuste', `Exportación PDF Factura ${invoice.id}`, 0);
+    if (generatingId) return;
+    setGeneratingId(facturable.id_pedido);
+    setEmailAlert(null);
+    try {
+      const invoice = await generarFactura(facturable);
+      setInvoices((prev) => [invoice, ...prev]);
+      setFacturables((prev) => prev.filter((f) => f.id_pedido !== facturable.id_pedido));
+      generatePDF(invoice);
+      await addLog('Ajuste', `Exportación PDF Factura ${invoice.id}`, 0);
+    } catch (e) {
+      console.error('Error al generar factura:', e);
+      setEmailAlert({
+        type: 'error',
+        msg: `No se pudo generar la factura para ${facturable.cliente}. Verificá la base de datos e intentá de nuevo.`,
+      });
+    } finally {
+      setGeneratingId(null);
+    }
   };
 
   // Exportar PDF de una factura existente
   const handleExportPDF = async (inv) => {
-    generatePDF(inv);
-    await addLog('Ajuste', `Exportación PDF Factura ${inv.id}`, 0);
+    if (generatingId) return;
+    setGeneratingId(inv.id);
+    try {
+      generatePDF(inv);
+      await addLog('Ajuste', `Exportación PDF Factura ${inv.id}`, 0);
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+    } finally {
+      setGeneratingId(null);
+    }
   };
 
   // Simulate Sending Invoice via Email
   const simulateSendEmail = (inv) => {
+    if (isSendingEmail) return;
     setIsSendingEmail(true);
+    setEmailAlert(null);
     setTimeout(() => {
       setIsSendingEmail(false);
       setEmailAlert({
@@ -199,10 +223,11 @@ export default function Finanzas() {
                     <button
                       className="btn btn-primary"
                       style={{ padding: '6px 12px', fontSize: '12px' }}
+                      disabled={generatingId === fac.id_pedido}
                       onClick={() => handleGenerateInvoice(fac)}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
-                      Generar Factura + PDF
+                      {generatingId === fac.id_pedido ? 'Generando...' : '+ PDF'}
                     </button>
                   </div>
                 </div>
@@ -247,13 +272,14 @@ export default function Finanzas() {
                     <button
                       className="btn btn-primary"
                       style={{ padding: '6px 12px', fontSize: '12px' }}
+                      disabled={generatingId === inv.id}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleExportPDF(inv);
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
-                      Generar Factura PDF
+                      {generatingId === inv.id ? 'Exportando...' : 'Generar Factura PDF'}
                     </button>
                     <button
                       className="btn btn-secondary"

@@ -80,6 +80,13 @@ export default function Perfil() {
     setMsg('')
     setErr('')
 
+    // Nombre obligatorio
+    if (!nombre || nombre.trim() === '') {
+      setSaving(false)
+      setErr('Debés completar el nombre completo.')
+      return
+    }
+
     // Teléfono: si se ingresó algo, debe ser un teléfono venezolano válido (+58).
     let phoneFinal = telefono
     if (telefono && telefono.trim() !== '') {

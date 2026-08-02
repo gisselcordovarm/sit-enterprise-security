@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DataStatus from '../components/common/DataStatus';
 import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos } from '../lib/data';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [selectedAlert, setSelectedAlert] = useState(null);
   const [alertFilter, setAlertFilter] = useState('ALL');
 
@@ -62,8 +64,8 @@ export default function Dashboard() {
       <header style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: 'var(--section-margin)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h1 className="display-lg text-on-surface" style={{ marginBottom: '4px' }}>System Overview</h1>
-            <p className="body-sm text-on-surface-variant">Real-time metrics and operations status</p>
+            <h1 className="display-lg text-on-surface" style={{ marginBottom: '4px' }}>Resumen General</h1>
+            <p className="body-sm text-on-surface-variant">Métricas en tiempo real y estado de las operaciones</p>
           </div>
         </div>
       </header>
@@ -193,7 +195,7 @@ export default function Dashboard() {
             <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', background: 'rgba(78, 71, 207, 0.1)', borderRadius: '0 0 0 100%', filter: 'blur(32px)' }} />
             <h3 className="headline-md text-on-surface" style={{ marginBottom: '24px', position: 'relative', zIndex: 10 }}>Estado de Operaciones</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', zIndex: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }} onClick={() => navigate('/operaciones')} onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(104, 98, 233, 0.08)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(165, 216, 255, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-variant)' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>local_shipping</span>
@@ -205,7 +207,7 @@ export default function Dashboard() {
                 </div>
                 <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>chevron_right</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }} onClick={() => navigate('/pedidos')} onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(104, 98, 233, 0.08)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(131, 106, 157, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-variant)' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>inventory_2</span>
@@ -224,7 +226,7 @@ export default function Dashboard() {
           <div className="glass-panel" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 className="headline-md text-on-surface">Alertas Recientes</h3>
-              <a href="#" className="body-sm text-primary" style={{ textDecoration: 'none' }}>Ver Todo</a>
+              <a href="/postventa" className="body-sm text-primary" style={{ textDecoration: 'none' }}>Ver Todo</a>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
               {filteredAlerts.length > 0 ? (

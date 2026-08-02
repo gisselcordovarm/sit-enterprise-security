@@ -11,6 +11,8 @@ export default function Instalacion() {
   const [notes, setNotes] = useState('');
   const [installedCount, setInstalledCount] = useState('Completo');
   const [savedReport, setSavedReport] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // HTML5 Canvas Digital Signature ref
   const canvasRef = useRef(null);
@@ -87,30 +89,57 @@ export default function Instalacion() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
+  // Check if signature canvas has drawn content
+  const hasSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return false;
+    const ctx = canvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] !== 0) return true;
+    }
+    return false;
+  };
+
   // Submit Completed report
   const handleSaveReport = async (e) => {
     e.preventDefault();
     if (!selectedTask) return;
 
-    const canvas = canvasRef.current;
-    let signatureImg = null;
-    if (canvas) {
-      signatureImg = canvas.toDataURL();
+    // Requiere firma del cliente antes de confirmar la entrega.
+    if (!hasSignature()) {
+      setErrorMsg('Debes capturar la firma digital del cliente antes de confirmar la entrega.');
+      const sigZone = document.querySelector('.signature-canvas');
+      if (sigZone) sigZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
 
-    const result = await guardarInstalacion({
-      id: selectedTask.id,
-      client: selectedTask.client,
-      service: selectedTask.service,
-      notes,
-      status: installedCount,
-      signature: signatureImg,
-    });
+    setSaving(true);
+    setErrorMsg(null);
+    setSavedReport(null);
 
-    setSavedReport(result);
-    setInstalaciones((prev) => prev.filter((i) => i.id !== selectedTask.id));
-    setNotes('');
-    clearSignature();
+    const canvas = canvasRef.current;
+    const signatureImg = canvas ? canvas.toDataURL() : null;
+
+    try {
+      const result = await guardarInstalacion({
+        id: selectedTask.id,
+        client: selectedTask.client,
+        service: selectedTask.service,
+        notes,
+        status: installedCount,
+        signature: signatureImg,
+      });
+      setSavedReport(result);
+      setInstalaciones((prev) => prev.filter((i) => i.id !== selectedTask.id));
+      setNotes('');
+      clearSignature();
+    } catch (err) {
+      console.error('Error al guardar instalación:', err);
+      setErrorMsg('No se pudo guardar el reporte de instalación. Verificá la conexión e intentá de nuevo.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleNextOrder = () => {
@@ -246,7 +275,7 @@ export default function Instalacion() {
                       </button>
                     </label>
 
-                    <div style={{ background: '#060e20', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', height: '140px', touchAction: 'none' }}>
+                    <div className="signature-canvas" style={{ background: '#060e20', border: errorMsg ? '2px solid var(--error)' : '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', height: '140px', touchAction: 'none' }}>
                       <canvas
                         ref={canvasRef}
                         width={460}
@@ -266,9 +295,18 @@ export default function Instalacion() {
                     </span>
                   </div>
 
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                  {errorMsg && (
+                    <div className="alert-item alert-item--error" style={{ margin: '0 0 12px' }}>
+                      <span className="material-symbols-outlined">warning</span>
+                      <div className="alert-content">
+                        <p className="body-sm text-on-surface">{errorMsg}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saving}>
                     <span className="material-symbols-outlined">send_and_archive</span>
-                    Confirmar y Firmar Entrega
+                    {saving ? 'Guardando...' : 'Confirmar y Firmar Entrega'}
                   </button>
                 </form>
               </section>
