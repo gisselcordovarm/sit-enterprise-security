@@ -36,7 +36,8 @@ export function exportarXLSX(nombre, columnas, filas) {
   const xml = (v) => String(v == null ? '' : v)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-  let filasXml = '<Row><Cell><Data ss:Type="String">SIT · TecnoInnova — Empresa de Seguridad</Data></Cell></Row>'
+  let filasXml = `<Row><Cell><Data ss:Type="String">SIT · TecnoInnova — Empresa de Seguridad</Data></Cell></Row>
+<Row>`
   columnas.forEach((c) => {
     filasXml += `<Cell ss:StyleID="head"><Data ss:Type="String">${xml(c)}</Data></Cell>`
   })
