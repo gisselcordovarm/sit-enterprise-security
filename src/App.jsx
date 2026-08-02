@@ -10,6 +10,7 @@ import Instalacion from './pages/Instalacion'
 import Finanzas from './pages/Finanzas'
 import Postventa from './pages/Postventa'
 import Usuarios from './pages/Usuarios'
+import Perfil from './pages/Perfil'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="finanzas" element={<RequireRole moduleKey="finanzas"><Finanzas /></RequireRole>} />
             <Route path="postventa" element={<RequireRole moduleKey="postventa"><Postventa /></RequireRole>} />
             <Route path="usuarios" element={<RequireRole moduleKey="usuarios"><Usuarios /></RequireRole>} />
+            <Route path="perfil" element={<Perfil />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { ROL_LABELS } from '../../lib/roles';
 
@@ -40,13 +41,17 @@ export default function TopBar({ onToggleMobileMenu }) {
       <div className="topbar-actions" style={{ justifySelf: 'end' }}>
 
         {/* Usuario actual */}
-        <div className="topbar-user" title={`${profile?.email || ''}`}>
-          <span className="material-symbols-outlined">account_circle</span>
+        <Link to="/perfil" className="topbar-user" title={`${profile?.email || ''}`} style={{ textDecoration: 'none' }}>
+          {profile?.foto ? (
+            <img src={profile.foto} alt="Foto de perfil" className="avatar-img avatar-img-sm" style={{ width: 30, height: 30, borderRadius: '50%' }} />
+          ) : (
+            <span className="material-symbols-outlined">account_circle</span>
+          )}
           <div style={{ lineHeight: 1.1 }}>
             <span className="body-sm text-on-surface" style={{ fontWeight: 600 }}>{profile?.nombre || profile?.email || 'Usuario'}</span>
             <span className="label-caps text-on-surface-variant" style={{ fontSize: '9px' }}>{roleLabel}</span>
           </div>
-        </div>
+        </Link>
 
         {/* System Health Status Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(62, 241, 181, 0.1)', border: '1px solid rgba(62, 241, 181, 0.2)' }}>

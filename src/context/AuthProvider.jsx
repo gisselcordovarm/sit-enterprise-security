@@ -3,9 +3,21 @@ import { supabase, DEMO_MODE } from '../lib/supabase'
 import { ROLES, ADMIN_EMAIL } from '../lib/roles'
 import { AuthContext } from './authContext'
 
+const DEMO_STORAGE_KEY = 'sit_demo_profile'
+
+function readDemoProfile() {
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || 'null')
+  } catch {
+    return null
+  }
+}
+
 async function resolveProfile(userId, email) {
   // Modo demo (sin Supabase configurado): se autentica cualquier correo válido.
   if (DEMO_MODE || !supabase) {
+    const saved = readDemoProfile()
+    if (saved?.email) return saved
     const isAdminEmail = String(email || '').toLowerCase() === ADMIN_EMAIL
     return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: isAdminEmail ? ROLES.ADMIN : ROLES.BASICO, activo: true }
   }
@@ -83,6 +95,38 @@ export default function AuthProvider({ children }) {
     setState({ user: null, profile: null, loading: false })
   }, [])
 
+  // Actualiza datos básicos del perfil (nombre, foto, teléfono, cargo).
+  const updateProfile = useCallback(async (updates) => {
+    const patch = {
+      nombre: updates.nombre,
+      foto: updates.foto ?? null,
+      telefono: updates.telefono ?? null,
+      cargo: updates.cargo ?? null,
+    }
+    if (DEMO_MODE || !supabase) {
+      setState((s) => {
+        const next = { ...s, profile: { ...s.profile, ...patch } }
+        try { localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(next.profile)) } catch { /* ignorar */ }
+        return next
+      })
+      return null
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', state.profile?.id)
+    if (error) return error.message
+    setState((s) => ({ ...s, profile: { ...s.profile, ...patch } }))
+    return null
+  }, [state.profile?.id])
+
+  // Cambia la contraseña de la sesión actual (requiere sesión activa).
+  const changePassword = useCallback(async (newPassword) => {
+    if (!supabase || DEMO_MODE) return 'Cambio de contraseña desactivado en modo demostración.'
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    return error ? error.message : null
+  }, [])
+
   const value = useMemo(
     () => ({
       ...state,
@@ -90,8 +134,10 @@ export default function AuthProvider({ children }) {
       isAdminView: state.profile?.rol === ROLES.ADMIN,
       signIn,
       signOut,
+      updateProfile,
+      changePassword,
     }),
-    [state, signIn, signOut],
+    [state, signIn, signOut, updateProfile, changePassword],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

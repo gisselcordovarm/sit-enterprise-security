@@ -36,8 +36,16 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
+        <NavLink to="/perfil" className="sidebar-link" style={{ justifyContent: 'flex-start' }}>
+          <span className="material-symbols-outlined">account_circle</span>
+          <span className="body-sm">Mi Perfil</span>
+        </NavLink>
         <div className="user-profile">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100" alt="Usuario" />
+          {profile?.foto ? (
+            <img src={profile.foto} alt="Foto de perfil" className="avatar-img" />
+          ) : (
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100" alt="Usuario" className="avatar-img" />
+          )}
           <div className="user-info">
             <span className="body-sm text-on-surface" style={{ fontWeight: '600' }}>{displayName}</span>
             <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>{roleLabel}</span>
