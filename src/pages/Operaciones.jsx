@@ -90,7 +90,7 @@ export default function Operaciones() {
       {/* Grid 2 Columns */}
       <div className="grid-2">
         {/* Inventory Monitor Panel */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Control de Stock Crítico</h2>
@@ -150,7 +150,7 @@ export default function Operaciones() {
         </section>
 
         {/* Dispatch & Assignation Algorithm Panel */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Algoritmo de Ruteo Geográfico</h2>
@@ -183,7 +183,7 @@ export default function Operaciones() {
             <span className="label-caps text-on-surface-variant" style={{ display: 'block', marginBottom: '8px' }}>Carga de Trabajo de Técnicos</span>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {technicians.map((t) => (
-                <div key={t.id} style={{ flex: '1 1 140px', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)' }}>
+                <div key={t.id} style={{ flex: '1 1 140px', padding: '10px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)' }}>
                   <span className="body-sm text-on-surface" style={{ fontWeight: 'bold', display: 'block' }}>{t.name}</span>
                   <span className="label-caps text-primary" style={{ fontSize: '10px', display: 'block' }}>Zona {t.zone}</span>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
@@ -198,7 +198,7 @@ export default function Operaciones() {
       </div>
 
       {/* Assignment lists */}
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', marginTop: '20px' }}>
+      <section className="card glass-panel" style={{ background: 'var(--glass-bg)', marginTop: '20px' }}>
         <div className="card-header-border">
           <h2 className="headline-md text-on-surface">Asignaciones en Ejecución</h2>
           <span className="badge badge-info">{assignments.length} activas</span>

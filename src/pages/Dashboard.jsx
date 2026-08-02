@@ -5,7 +5,6 @@ import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos } 
 export default function Dashboard() {
   const [selectedAlert, setSelectedAlert] = useState(null);
   const [alertFilter, setAlertFilter] = useState('ALL');
-  const [chartMetric, setChartMetric] = useState('OP'); // 'OP' = Operaciones, 'ING' = Ingresos
 
   const [kpis, setKpis] = useState({ pedidosTotales: 0, incidenciasAbiertas: 0, tecnicosActivos: 0, tecnicosTotales: 0, nps: 0 });
   const [alerts, setAlerts] = useState([]);
@@ -48,277 +47,233 @@ export default function Dashboard() {
     }));
   };
 
-  const chartData = buildChart(chartMetric === 'OP' ? semana.op : semana.ing);
-
-  // ==== Donut de distribución por estado de pedido ====
-  const ESTADO_COLORS = ['#5e8bff', '#3ef1b5', '#dcb8ff', '#ff886b', '#8a93a6'];
-  const estadoTotal = estados.reduce((s, e) => s + e.value, 0);
-  const CIRC = 2 * Math.PI * 54;
-  const donutSegs = estados.reduce((acc, e, i) => {
-    const len = estadoTotal ? (e.value / estadoTotal) * CIRC : 0;
-    acc.list.push({ ...e, len, offset: -acc.total, color: ESTADO_COLORS[i % ESTADO_COLORS.length] });
-    acc.total += len;
-    return acc;
-  }, { list: [], total: 0 }).list;
+  const chartData = buildChart(semana.op);
 
   const kpiCards = [
-    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: '+14%', trendUp: true, icon: 'shopping_bag', colorClass: 'text-primary', containerBg: 'rgba(94, 139, 255, 0.1)' },
-    { title: 'Alarmas Activas', value: String(kpis.incidenciasAbiertas), trend: '-24%', trendUp: false, icon: 'emergency_home', colorClass: 'text-error', containerBg: 'rgba(255, 180, 171, 0.1)' },
-    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: '92%', trendUp: true, icon: 'engineering', colorClass: 'text-success', containerBg: 'rgba(62, 241, 181, 0.1)' },
-    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: '+5ptos', trendUp: true, icon: 'thumb_up', colorClass: 'text-secondary', containerBg: 'rgba(220, 184, 255, 0.1)' },
+    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: '+14%', trendUp: true, blobBg: 'rgba(165, 216, 255, 0.5)' },
+    { title: 'Alarmas Activas', value: String(kpis.incidenciasAbiertas), trend: '-24%', trendUp: false, blobBg: 'rgba(131, 106, 157, 0.5)' },
+    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: '+5', trendUp: true, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
+    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Estable', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)' },
   ];
 
   return (
     <div>
-      {/* Title section */}
-      <div style={{ marginBottom: 'var(--stack-lg)' }}>
-        <h1 className="display-lg text-on-surface">Panel Central</h1>
-        <p className="body-md text-on-surface-variant">Monitoreo general de operaciones de seguridad y factibilidad técnica.</p>
-      </div>
+      {/* Header */}
+      <header style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: 'var(--section-margin)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h1 className="display-lg text-on-surface" style={{ marginBottom: '4px' }}>System Overview</h1>
+            <p className="body-sm text-on-surface-variant">Real-time metrics and operations status</p>
+          </div>
+        </div>
+      </header>
 
       <DataStatus loading={loading} liveError={liveError} />
 
-      {/* KPI Bento Grid */}
-      <section className="kpi-grid">
-        {kpiCards.map((kpi, idx) => (
-          <div key={idx} className="kpi-card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
-            <div className="kpi-header">
-              <span className="label-caps text-on-surface-variant">{kpi.title}</span>
-              <div className="kpi-icon-wrapper" style={{ background: kpi.containerBg }}>
-                <span className={`material-symbols-outlined ${kpi.colorClass}`}>{kpi.icon}</span>
-              </div>
-            </div>
-            <div>
-              <div className="kpi-value text-on-surface">{kpi.value}</div>
-              <div className="trend-indicator body-sm">
-                <span
-                  className="material-symbols-outlined"
-                  style={{ color: kpi.trendUp ? 'var(--success)' : 'var(--error)', fontSize: '16px' }}
-                >
-                  {kpi.trendUp ? 'trending_up' : 'trending_down'}
-                </span>
-                <span style={{ color: kpi.trendUp ? 'var(--success)' : 'var(--error)', fontWeight: 'bold' }}>
-                  {kpi.trend}
-                </span>
-                <span className="text-on-surface-variant">vs semana anterior</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* Asymmetric Grid */}
-      <div className="asymmetric-grid">
-        {/* SVG Operations Chart Panel */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
-          <div className="card-header-border">
-            <div>
-              <h2 className="headline-md text-on-surface">Métricas de Operaciones</h2>
-              <span className="body-sm text-on-surface-variant">Resumen diario de servicios e instalaciones ejecutadas</span>
-            </div>
-            {/* Metric selector tabs */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => setChartMetric('OP')}
-                className={`btn ${chartMetric === 'OP' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+      {/* Dashboard Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--widget-gap)' }}>
+        {/* Main Metrics (Span 2 columns on xl) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--widget-gap)' }}>
+          {/* KPI Row */}
+          <div className="kpi-grid">
+            {kpiCards.map((kpi, idx) => (
+              <div
+                key={idx}
+                className="kpi-card glass-panel"
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: '1.5rem',
+                  padding: 'var(--card-padding)',
+                }}
               >
-                Servicios
-              </button>
-              <button
-                onClick={() => setChartMetric('ING')}
-                className={`btn ${chartMetric === 'ING' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-              >
-                Ventas
-              </button>
-            </div>
-          </div>
-
-          {/* SVG Custom Chart */}
-          <div className="chart-container" style={{ position: 'relative' }}>
-            <svg viewBox="0 0 700 300" width="100%" height="100%">
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--primary-container)" />
-                  <stop offset="100%" stopColor="rgba(94, 139, 255, 0.1)" />
-                </linearGradient>
-                <linearGradient id="barGradientHover" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--secondary)" />
-                  <stop offset="100%" stopColor="rgba(220, 184, 255, 0.2)" />
-                </linearGradient>
-              </defs>
-
-              {/* Grid Lines */}
-              <line x1="50" y1="50" x2="650" y2="50" stroke="var(--outline-variant)" strokeDasharray="4" strokeWidth="0.5" />
-              <line x1="50" y1="125" x2="650" y2="125" stroke="var(--outline-variant)" strokeDasharray="4" strokeWidth="0.5" />
-              <line x1="50" y1="200" x2="650" y2="200" stroke="var(--outline-variant)" strokeDasharray="4" strokeWidth="0.5" />
-              <line x1="50" y1="250" x2="650" y2="250" stroke="var(--outline-variant)" strokeWidth="1" />
-
-              {/* Y Axis Labels */}
-              <text x="35" y="55" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-mono)" textAnchor="end">150</text>
-              <text x="35" y="130" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-mono)" textAnchor="end">100</text>
-              <text x="35" y="205" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-mono)" textAnchor="end">50</text>
-              <text x="35" y="255" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-mono)" textAnchor="end">0</text>
-
-              {/* Render Bars */}
-              {chartData.map((data, index) => {
-                const barWidth = 45;
-                const spacing = 80;
-                const xPos = 70 + index * spacing;
-                const yPos = 250 - data.height;
-
-                return (
-                  <g key={index}>
-                    <rect
-                      x={xPos - 10}
-                      y="30"
-                      width={barWidth + 20}
-                      height="220"
-                      fill="transparent"
-                      className="chart-guide"
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <rect
-                      x={xPos}
-                      y={yPos}
-                      width={barWidth}
-                      height={data.height}
-                      fill="url(#barGradient)"
-                      rx="6"
-                      className="chart-bar-rect"
-                    />
-                    <text
-                      x={xPos + barWidth / 2}
-                      y={yPos - 8}
-                      fill="var(--on-surface)"
-                      fontSize="11"
-                      fontFamily="var(--font-mono)"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                    >
-                      {data.value}
-                    </text>
-                    <text
-                      x={xPos + barWidth / 2}
-                      y="275"
-                      fill="var(--on-surface-variant)"
-                      fontSize="12"
-                      fontFamily="var(--font-body)"
-                      textAnchor="middle"
-                    >
-                      {data.label}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        </section>
-
-        {/* Recent Alerts Feed Panel */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
-          <div className="card-header-border">
-            <div>
-              <h2 className="headline-md text-on-surface">Eventos y Alertas</h2>
-              <span className="body-sm text-on-surface-variant">Filtro en tiempo real</span>
-            </div>
-            {/* Alert Severity Filter */}
-            <select
-              value={alertFilter}
-              onChange={(e) => setAlertFilter(e.target.value)}
-              className="form-select"
-              style={{ width: 'auto', padding: '4px 10px', fontSize: '12px' }}
-            >
-              <option value="ALL">Todos</option>
-              <option value="ERROR">Críticos</option>
-              <option value="WARNING">Advertencia</option>
-              <option value="SUCCESS">Éxitos</option>
-              <option value="INFO">Info</option>
-            </select>
-          </div>
-
-          <div className="alerts-feed">
-            {filteredAlerts.length > 0 ? (
-              filteredAlerts.map((alert) => (
+                {/* Decorative blob */}
                 <div
-                  key={alert.id}
-                  className={`alert-item alert-item--${alert.type}`}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setSelectedAlert(alert)}
+                  className="kpi-blob"
+                  style={{
+                    position: 'absolute',
+                    right: '-16px',
+                    top: '-16px',
+                    width: '96px',
+                    height: '96px',
+                    borderRadius: '50%',
+                    background: kpi.blobBg,
+                    filter: 'blur(40px)',
+                    transition: 'background 0.3s',
+                  }}
+                />
+                <p className="label-caps text-on-surface-variant" style={{ marginBottom: '8px', position: 'relative', zIndex: 10 }}>{kpi.title}</p>
+                <h3
+                  className="headline-lg"
+                  style={{
+                    color: kpi.isPrimary ? 'var(--primary)' : 'var(--on-surface)',
+                    position: 'relative',
+                    zIndex: 10,
+                  }}
                 >
-                  <span className={`material-symbols-outlined text-${alert.type === 'error' ? 'error' : alert.type === 'warning' ? 'secondary' : alert.type === 'success' ? 'success' : 'primary'}`}>
-                    {alert.type === 'error' ? 'error' : alert.type === 'warning' ? 'warning' : alert.type === 'success' ? 'check_circle' : 'info'}
+                  {kpi.value}
+                </h3>
+                <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px', position: 'relative', zIndex: 10 }}>
+                  <span className="material-symbols-outlined" style={{
+                    fontSize: '16px',
+                    color: kpi.trendUp === true ? 'var(--primary)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
+                  }}>
+                    {kpi.trendUp === true ? 'trending_up' : kpi.trendUp === false ? 'trending_down' : 'horizontal_rule'}
                   </span>
-                  <div className="alert-content" style={{ width: '100%' }}>
-                    <h4 className="text-on-surface">{alert.title}</h4>
-                    <p className="body-sm text-on-surface-variant">{alert.description}</p>
-                    <span className="alert-time">{alert.time}</span>
+                  <span className="body-sm" style={{
+                    color: kpi.trendUp === true ? 'var(--primary)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
+                  }}>
+                    {kpi.trend}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* System Activity Graph */}
+          <div className="glass-panel" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', height: '400px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 10 }}>
+              <h3 className="headline-md text-on-surface">Actividad del Sistema</h3>
+              <div className="glass-panel" style={{ borderRadius: 'var(--radius-full)', padding: '4px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="body-sm text-on-surface-variant">Esta Semana</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--on-surface-variant)' }}>expand_more</span>
+              </div>
+            </div>
+            {/* Decorative gradient */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50%', background: 'linear-gradient(to top, rgba(78, 71, 207, 0.1), transparent)', zIndex: 0 }} />
+            {/* Bars */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', position: 'relative', zIndex: 10, marginTop: '16px', paddingBottom: '32px', borderBottom: '1px solid rgba(199, 196, 214, 0.3)', paddingLeft: '32px', paddingRight: '8px' }}>
+              {chartData.length > 0 ? chartData.map((d, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: `${Math.max(30, 100 / chartData.length - 2)}%`,
+                    height: `${d.height}px`,
+                    background: i === 3 ? 'linear-gradient(135deg, #6862e9, #4e47cf)' : 'var(--surface-container-highest)',
+                    borderRadius: '9999px 9999px 0 0',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    boxShadow: i === 3 ? '0 0 15px rgba(78, 71, 207, 0.4)' : 'none',
+                    transition: 'all 0.3s',
+                  }}
+                  title={`${d.label}: ${d.value}`}
+                >
+                  <span style={{
+                    position: 'absolute',
+                    top: '-32px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: '11px',
+                    fontWeight: i === 3 ? '700' : '400',
+                    color: i === 3 ? 'var(--primary)' : 'var(--on-surface-variant)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {d.label}: {d.value}
+                  </span>
+                </div>
+              )) : (
+                <div style={{ width: '100%', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
+                  <span className="body-sm">Sin datos disponibles</span>
+                </div>
+              )}
+            </div>
+            {/* X-axis labels */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--on-surface-variant)', fontFamily: 'var(--font-mono)', marginTop: '8px', paddingLeft: '32px', paddingRight: '8px' }}>
+              {semana.op.map((s, i) => (
+                <span key={i} style={{ color: i === 3 ? 'var(--primary)' : undefined, fontWeight: i === 3 ? '700' : '400' }}>{s.label}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar (Span 1 column on xl) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--widget-gap)' }}>
+          {/* Operations Status */}
+          <div className="glass-panel-elevated" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', position: 'relative', overflow: 'hidden', background: 'rgba(104, 98, 233, 0.03)' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', background: 'rgba(78, 71, 207, 0.1)', borderRadius: '0 0 0 100%', filter: 'blur(32px)' }} />
+            <h3 className="headline-md text-on-surface" style={{ marginBottom: '24px', position: 'relative', zIndex: 10 }}>Estado de Operaciones</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', zIndex: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(165, 216, 255, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-variant)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>local_shipping</span>
+                  </div>
+                  <div>
+                    <p className="body-sm text-on-surface" style={{ fontWeight: '700' }}>Flota Activa</p>
+                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>92% Operativa</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--on-surface-variant)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '8px' }}>notifications_off</span>
-                <p className="body-md">No hay alertas del tipo seleccionado.</p>
+                <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>chevron_right</span>
               </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      {/* Distribución de pedidos por estado */}
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginTop: '24px' }}>
-        <div>
-          <div className="card-header-border">
-            <h2 className="headline-md text-on-surface">Distribución de Pedidos</h2>
-            <span className="body-sm text-on-surface-variant">Estado actual de todos los pedidos registrados</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '280px' }}>
-            {estadoTotal > 0 ? (
-              <svg viewBox="0 0 140 140" width="230" height="230">
-                <circle cx="70" cy="70" r="54" fill="none" stroke="var(--outline-variant)" strokeWidth="20" opacity="0.3" />
-                {donutSegs.map((s, i) => (
-                  <circle
-                    key={i}
-                    cx="70" cy="70" r="54" fill="none"
-                    stroke={s.color} strokeWidth="20"
-                    strokeDasharray={`${s.len} ${CIRC - s.len}`}
-                    strokeDashoffset={s.offset}
-                    transform="rotate(-90 70 70)"
-                    strokeLinecap="butt"
-                  >
-                    <title>{`${s.estado}: ${s.value}`}</title>
-                  </circle>
-                ))}
-                <text x="70" y="66" textAnchor="middle" fill="var(--on-surface)" fontSize="26" fontFamily="var(--font-mono)" fontWeight="bold">{estadoTotal}</text>
-                <text x="70" y="84" textAnchor="middle" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-body)">pedidos</text>
-              </svg>
-            ) : (
-              <p className="body-md text-on-surface-variant">Sin datos</p>
-            )}
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
-          {donutSegs.length > 0 ? donutSegs.map((s, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--outline-variant)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ width: '12px', height: '12px', borderRadius: '4px', background: s.color, display: 'inline-block' }} />
-                <span className="body-sm text-on-surface">{s.estado}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '0.75rem', transition: 'background 0.2s', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(131, 106, 157, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-variant)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>inventory_2</span>
+                  </div>
+                  <div>
+                    <p className="body-sm text-on-surface" style={{ fontWeight: '700' }}>Almacén</p>
+                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>Capacidad al 78%</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>chevron_right</span>
               </div>
-              <span className="label-caps" style={{ color: 'var(--on-surface-variant)' }}>{estadoTotal ? Math.round((s.value / estadoTotal) * 100) : 0}% · {s.value}</span>
             </div>
-          )) : <p className="body-md text-on-surface-variant">Sin datos</p>}
+          </div>
+
+          {/* Recent Alerts */}
+          <div className="glass-panel" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 className="headline-md text-on-surface">Alertas Recientes</h3>
+              <a href="#" className="body-sm text-primary" style={{ textDecoration: 'none' }}>Ver Todo</a>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
+              {filteredAlerts.length > 0 ? (
+                filteredAlerts.slice(0, 4).map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="glass-panel"
+                    style={{
+                      padding: '16px',
+                      borderRadius: '1rem',
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'flex-start',
+                      borderLeft: `4px solid ${alert.type === 'error' ? 'var(--error)' : alert.type === 'warning' ? 'var(--secondary)' : alert.type === 'success' ? 'var(--success)' : 'var(--primary)'}`,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setSelectedAlert(alert)}
+                  >
+                    <span className={`material-symbols-outlined`} style={{
+                      color: alert.type === 'error' ? 'var(--error)' : alert.type === 'warning' ? 'var(--secondary)' : alert.type === 'success' ? 'var(--success)' : 'var(--primary)',
+                      marginTop: '2px',
+                    }}>
+                      {alert.type === 'error' ? 'error' : alert.type === 'warning' ? 'warning' : alert.type === 'success' ? 'check_circle' : 'info'}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="body-sm text-on-surface" style={{ fontWeight: '700' }}>{alert.title}</p>
+                      <p className="body-sm text-on-surface-variant" style={{ fontSize: '12px', marginTop: '4px', lineHeight: '1.4' }}>{alert.description}</p>
+                      <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px', marginTop: '8px', display: 'block' }}>{alert.time}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--on-surface-variant)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '8px' }}>notifications_off</span>
+                  <p className="body-sm">No hay alertas recientes</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Modal de la alerta */}
       {selectedAlert && (
         <div className="modal-overlay" onClick={() => setSelectedAlert(null)}>
-          <div className="modal-content glass-panel" style={{ background: '#131b2e' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content glass-panel" style={{ background: 'var(--glass-bg-strong)' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span className={`material-symbols-outlined text-${selectedAlert.type === 'error' ? 'error' : selectedAlert.type === 'warning' ? 'secondary' : selectedAlert.type === 'success' ? 'success' : 'primary'}`}>
+                <span className={`material-symbols-outlined`} style={{ color: selectedAlert.type === 'error' ? 'var(--error)' : selectedAlert.type === 'warning' ? 'var(--secondary)' : selectedAlert.type === 'success' ? 'var(--success)' : 'var(--primary)' }}>
                   {selectedAlert.type === 'error' ? 'error' : selectedAlert.type === 'warning' ? 'warning' : selectedAlert.type === 'success' ? 'check_circle' : 'info'}
                 </span>
                 <h3 className="headline-md text-on-surface">{selectedAlert.title}</h3>
@@ -330,14 +285,14 @@ export default function Dashboard() {
             <div className="modal-body">
               <div style={{ marginBottom: '16px' }}>
                 <span className="label-caps text-on-surface-variant">Fecha y Hora</span>
-                <p className="body-md text-on-surface" style={{ marginTop: '4px' }}>{selectedAlert.time} (Tiempo de servidor)</p>
+                <p className="body-md text-on-surface" style={{ marginTop: '4px' }}>{selectedAlert.time}</p>
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <span className="label-caps text-on-surface-variant">Resumen de Alerta</span>
                 <p className="body-md text-on-surface" style={{ marginTop: '4px' }}>{selectedAlert.description}</p>
               </div>
-              <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)' }}>
-                <span className="label-caps text-secondary">Detalles Técnicos / Acción Requerida</span>
+              <div style={{ padding: '16px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)' }}>
+                <span className="label-caps text-secondary">Detalles Técnicos</span>
                 <p className="body-sm text-on-surface" style={{ marginTop: '8px', whiteSpace: 'pre-line', lineHeight: '20px' }}>
                   {selectedAlert.details}
                 </p>
@@ -345,15 +300,6 @@ export default function Dashboard() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setSelectedAlert(null)}>Cerrar</button>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  alert(`Iniciando protocolo de resolución para evento: ${selectedAlert.title}`);
-                  setSelectedAlert(null);
-                }}
-              >
-                Resolver Evento
-              </button>
             </div>
           </div>
         </div>

@@ -142,7 +142,7 @@ export default function Pedidos() {
 
       <div className="grid-2">
         {/* Order Capture Form */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Captar Nuevo Pedido</h2>
           </div>
@@ -219,7 +219,7 @@ export default function Pedidos() {
               </div>
 
             {/* Líneas de pedido (reservan stock del inventario) */}
-            <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--outline-variant)', marginBottom: 'var(--stack-lg)' }}>
+            <div style={{ padding: '16px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--outline-variant)', marginBottom: 'var(--stack-lg)' }}>
               <span className="label-caps text-secondary" style={{ display: 'block', marginBottom: '12px' }}>
                 Equipos a Reservar (Detalle de Pedido)
               </span>
@@ -270,7 +270,7 @@ export default function Pedidos() {
             </div>
 
             {/* Algorithm inputs simulation */}
-            <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--outline-variant)', marginBottom: 'var(--stack-lg)' }}>
+            <div style={{ padding: '16px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--outline-variant)', marginBottom: 'var(--stack-lg)' }}>
               <span className="label-caps text-secondary" style={{ display: 'block', marginBottom: '12px' }}>Parámetros de Validación Automática</span>
 
               <div className="grid-2" style={{ gap: '12px', marginBottom: '0' }}>
@@ -309,7 +309,7 @@ export default function Pedidos() {
         </section>
 
         {/* Orders Listing status */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Historial de Órdenes Evaluadas</h2>
             <span className="badge badge-info">{orders.length} registros</span>

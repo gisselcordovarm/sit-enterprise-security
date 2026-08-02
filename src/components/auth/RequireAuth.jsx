@@ -28,7 +28,7 @@ export function RequireRole({ moduleKey, children }) {
   if (!canAccess(rol, moduleKey)) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
-        <div className="glass-panel" style={{ padding: '40px', maxWidth: '460px', textAlign: 'center', background: 'rgba(23, 31, 51, 0.6)' }}>
+        <div className="glass-panel" style={{ padding: '40px', maxWidth: '460px', textAlign: 'center', background: 'var(--glass-bg-strong)' }}>
           <span className="material-symbols-outlined text-secondary" style={{ fontSize: '56px' }}>lock</span>
           <h2 className="headline-md text-on-surface" style={{ margin: '12px 0' }}>Acceso restringido</h2>
           <p className="body-md text-on-surface-variant">

@@ -43,12 +43,12 @@ export default function Usuarios() {
       <DataStatus loading={loading} liveError={liveError} />
 
       {notice && (
-        <div className="m3-banner" style={{ background: 'rgba(62, 241, 181, 0.12)', borderColor: 'rgba(62, 241, 181, 0.3)' }}>
+        <div className="m3-banner" style={{ background: 'var(--tint-success)', borderColor: 'rgba(14, 159, 110, 0.3)' }}>
           <span className="label-caps text-success">{notice}</span>
         </div>
       )}
 
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+      <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
         <div className="card-header-border" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className="headline-md text-on-surface">Usuarios del sistema</h2>

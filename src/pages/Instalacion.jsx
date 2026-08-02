@@ -131,14 +131,14 @@ export default function Instalacion() {
       <DataStatus loading={loading} liveError={liveError} />
 
       {savedReport ? (
-        <section className="card glass-panel" style={{ background: 'rgba(62, 241, 181, 0.1)', border: '1px solid rgba(62, 241, 181, 0.3)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--tint-success)', border: '1px solid rgba(14, 159, 110, 0.3)' }}>
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
             <span className="material-symbols-outlined text-success" style={{ fontSize: '48px' }}>check_circle</span>
             <h2 className="headline-md text-on-surface">¡Parte Técnico Guardado!</h2>
             <p className="body-sm text-on-surface-variant">El parte ha sido sincronizado al servidor central.</p>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: 'var(--radius-lg)', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--surface-container-low)', padding: '12px', borderRadius: 'var(--radius-lg)', marginBottom: '16px' }}>
             <span className="label-caps text-primary" style={{ display: 'block', marginBottom: '8px' }}>Resumen de Entrega</span>
             <p className="body-sm text-on-surface"><strong>Cliente:</strong> {savedReport.task.client}</p>
             <p className="body-sm text-on-surface"><strong>Servicio:</strong> {savedReport.task.service}</p>
@@ -163,7 +163,7 @@ export default function Instalacion() {
       ) : (
         <div>
           {!selectedTask ? (
-            <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', textAlign: 'center', padding: '32px' }}>
+            <section className="card glass-panel" style={{ background: 'var(--glass-bg)', textAlign: 'center', padding: '32px' }}>
               <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '48px' }}>check_circle</span>
               <h2 className="headline-md text-on-surface" style={{ marginTop: '12px' }}>Sin órdenes de instalación pendientes</h2>
               <p className="body-sm text-on-surface-variant">Las órdenes asignadas aparecerán aquí para completar el parte técnico y la firma digital.</p>
@@ -189,7 +189,7 @@ export default function Instalacion() {
               )}
 
               {/* Active Job Information */}
-              <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', marginBottom: '16px' }}>
+              <section className="card glass-panel" style={{ background: 'var(--glass-bg)', marginBottom: '16px' }}>
                 <div className="card-header-border">
                   <span className="badge badge-info">{selectedTask.taskId}</span>
                   <span className="label-caps text-secondary">Orden Asignada</span>
@@ -201,14 +201,14 @@ export default function Instalacion() {
                     {selectedTask.address}
                   </p>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)' }}>
+                <div style={{ background: 'var(--surface-container-low)', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)' }}>
                   <span className="label-caps text-primary" style={{ fontSize: '10px' }}>Materiales a Instalar:</span>
                   <p className="body-sm text-on-surface" style={{ marginTop: '4px', fontFamily: 'var(--font-mono)' }}>{selectedTask.components}</p>
                 </div>
               </section>
 
               {/* Form Report */}
-              <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+              <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
                 <div className="card-header-border">
                   <h2 className="headline-md text-on-surface" style={{ fontSize: '16px' }}>Reporte de Intervención</h2>
                 </div>

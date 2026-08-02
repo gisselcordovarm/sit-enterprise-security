@@ -64,7 +64,7 @@ export default function Login() {
       <div className="auth-bg" />
       <div className="auth-card glass-panel">
         <div className="auth-logo">
-          <img src="/tecnoinnova-logo.svg" alt="TecnoInnova" />
+          <img src="/tecnoinnova-logo.png" alt="TecnoInnova" style={{ objectFit: 'contain' }} />
           <div>
             <span className="headline-md text-on-surface" style={{ fontWeight: 700 }}>TecnoInnova</span>
             <span className="label-caps text-on-surface-variant">SIT · Seguridad Electrónica</span>

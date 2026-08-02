@@ -127,13 +127,13 @@ export default function Reportes() {
       <DataStatus loading={loading} liveError={liveError} />
 
       {nota && (
-        <div className="m3-banner" style={{ background: 'rgba(62, 241, 181, 0.12)', borderColor: 'rgba(62, 241, 181, 0.3)' }}>
+        <div className="m3-banner" style={{ background: 'var(--tint-success)', borderColor: 'rgba(14, 159, 110, 0.3)' }}>
           <span className="label-caps text-success">{nota}</span>
         </div>
       )}
 
       {/* Reporte semanal */}
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', marginBottom: 'var(--stack-lg)' }}>
+      <section className="card glass-panel" style={{ background: 'var(--glass-bg)', marginBottom: 'var(--stack-lg)' }}>
         <div className="card-header-border" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className="headline-md text-on-surface">1 · Reporte semanal de pedidos (.PDF)</h2>
@@ -182,7 +182,7 @@ export default function Reportes() {
 
       <section className="grid-2">
         {/* Inventario */}
-        <div className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <div className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Listado de Inventario (.XLS)</h2>
@@ -212,7 +212,7 @@ export default function Reportes() {
         </div>
 
         {/* Técnicos */}
-        <div className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <div className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Listado de Técnicos (.CSV)</h2>
@@ -244,7 +244,7 @@ export default function Reportes() {
       </section>
 
       {/* Facturas */}
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', marginTop: 'var(--stack-lg)' }}>
+      <section className="card glass-panel" style={{ background: 'var(--glass-bg)', marginTop: 'var(--stack-lg)' }}>
         <div className="card-header-border">
           <div>
             <h2 className="headline-md text-on-surface">Impresión de Facturas (.PDF)</h2>
@@ -281,7 +281,7 @@ export default function Reportes() {
       </section>
 
       {/* Consultas SQL */}
-      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', marginTop: 'var(--stack-lg)' }}>
+      <section className="card glass-panel" style={{ marginTop: 'var(--stack-lg)' }}>
         <div className="card-header-border" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className="headline-md text-on-surface">Consultas SQL usadas en los reportes</h2>
@@ -293,7 +293,18 @@ export default function Reportes() {
           </button>
         </div>
         {[...CONSULTAS_REPORTES, CONSULTA_METRICAS_SEMANALES].map((q) => (
-          <div key={q.modulo} style={{ border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', marginBottom: '10px', overflow: 'hidden' }}>
+          <div
+            key={q.modulo}
+            style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: 'none',
+              borderRadius: 'var(--radius-lg)',
+              marginBottom: '10px',
+              overflow: 'hidden',
+            }}
+          >
             <button
               type="button"
               onClick={() => abreSql(q.modulo)}

@@ -34,7 +34,7 @@ export default function DashboardLayout() {
   return (
     <div className="dashboard-layout">
       {/* Mobile Header */}
-      <div className="mobile-header glass-panel" style={{ background: 'rgba(11, 19, 38, 0.9)', backdropFilter: 'blur(12px)' }}>
+      <div className="mobile-header glass-panel" style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)' }}>
         <button className="icon-btn" onClick={toggleMobileMenu}>
           <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>

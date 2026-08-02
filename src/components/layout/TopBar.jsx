@@ -67,20 +67,13 @@ export default function TopBar({ onToggleMobileMenu }) {
         <span className="material-symbols-outlined" style={{ color: 'var(--on-surface)' }}>menu</span>
       </button>
 
-      {/* Breadcrumb */}
-      <div className="topbar-crumb">
-        <span className="label-caps text-secondary">SIT SISTEMA CONTROL</span>
-        <span className="text-on-surface-variant">/</span>
-        <span className="body-sm text-on-surface" style={{ fontWeight: '600' }}>Panel Central de Seguridad</span>
-      </div>
-
-      {/* Búsqueda funcional */}
+      {/* Search */}
       <div className="search-wrap" ref={boxRef}>
         <div className="search-container">
           <span className="material-symbols-outlined search-icon">search</span>
           <input
             type="text"
-            placeholder="Buscar pedido, cliente, técnico, inventario..."
+            placeholder="Buscar..."
             className="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -121,28 +114,25 @@ export default function TopBar({ onToggleMobileMenu }) {
         )}
       </div>
 
-      {/* Acciones derecha */}
+      {/* Right actions: Notifications + Avatar */}
       <div className="topbar-actions">
-        <div className="status-pill" title="Estado del sistema">
-          <span className="notification-dot" style={{ position: 'static', display: 'inline-block', background: 'var(--success)', width: '6px', height: '6px' }}></span>
-          <span className="label-caps text-success">Sistemas OK</span>
-        </div>
+        <button className="icon-btn" title="Notificaciones" aria-label="Notificaciones">
+          <span className="material-symbols-outlined">notifications</span>
+          <span className="notification-dot"></span>
+        </button>
 
         <Link to="/perfil" className="topbar-user" title={`${profile?.email || ''}`}>
           {profile?.foto ? (
-            <img src={profile.foto} alt="Foto de perfil" className="avatar-img" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={profile.foto} alt="Foto de perfil" className="avatar-img" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.4)', boxShadow: '0 0 8px rgba(0,0,0,0.08)' }} />
           ) : (
-            <span className="material-symbols-outlined">account_circle</span>
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAJxbqhUtB8G2qqlMkPcFj50uUXGy4gCjbiEokCwkGZ8nojY8pL7Yg8wAilMCpoQT4X4D-SPmoD7zQTQU9FyT9AJqhfJO7QK7yI_gOo0v7LtModyCCQUzaDle8f8QzuZoSWg3j_JSEszSDiEio6xoWdCvDMYZYWrr-apm5DQ7NMXtdTLUdthTJ-slMg13w1ESarZg5Frg94I0pVRgoLFRoLr8KspQSGcBU2pXNtMS3zWrgDedSk_BF"
+              alt="Avatar"
+              className="avatar-img"
+              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.4)', boxShadow: '0 0 8px rgba(0,0,0,0.08)' }}
+            />
           )}
-          <div className="topbar-user-text">
-            <span className="body-sm text-on-surface" style={{ fontWeight: 600 }}>{profile?.nombre || profile?.email || 'Usuario'}</span>
-            <span className="label-caps text-on-surface-variant">{roleLabel}</span>
-          </div>
         </Link>
-
-        <button className="icon-btn" onClick={signOut} title="Cerrar sesión">
-          <span className="material-symbols-outlined">logout</span>
-        </button>
       </div>
     </header>
   );

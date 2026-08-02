@@ -87,7 +87,7 @@ export default function Postventa() {
 
       {/* Quality metrics dashboard */}
       <section className="grid-3" style={{ marginBottom: '20px' }}>
-        <div className="kpi-card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', minHeight: '120px' }}>
+        <div className="kpi-card glass-panel" style={{ background: 'var(--glass-bg)', minHeight: '120px' }}>
           <span className="label-caps text-on-surface-variant">Score NPS Corporativo</span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '12px' }}>
             <span className="display-lg text-secondary" style={{ fontSize: '36px', lineHeight: '1' }}>{calculateNPS()}</span>
@@ -98,7 +98,7 @@ export default function Postventa() {
           </span>
         </div>
 
-        <div className="kpi-card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', minHeight: '120px' }}>
+        <div className="kpi-card glass-panel" style={{ background: 'var(--glass-bg)', minHeight: '120px' }}>
           <span className="label-caps text-on-surface-variant">Cumplimiento SLA</span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '12px' }}>
             <span className="display-lg text-success" style={{ fontSize: '36px', lineHeight: '1' }}>{slaCompliance}</span>
@@ -106,7 +106,7 @@ export default function Postventa() {
           <span className="body-sm text-on-surface-variant" style={{ display: 'block', marginTop: '8px' }}>Meta corporativa: 95.0%</span>
         </div>
 
-        <div className="kpi-card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', minHeight: '120px' }}>
+        <div className="kpi-card glass-panel" style={{ background: 'var(--glass-bg)', minHeight: '120px' }}>
           <span className="label-caps text-on-surface-variant">Incidencias Críticas</span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '12px' }}>
             <span className="display-lg text-error" style={{ fontSize: '36px', lineHeight: '1' }}>
@@ -120,7 +120,7 @@ export default function Postventa() {
 
       <div className="grid-2">
         {/* Incident Alerts (Last 7 Days) */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Historial de Incidencias (7 Días)</h2>
             <span className="badge badge-info">{incidents.length} registros</span>
@@ -146,7 +146,7 @@ export default function Postventa() {
                     {inc.status}
                   </span>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.01)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary-container)' }}>
+                <div style={{ background: 'var(--surface-container-low)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary-container)' }}>
                   <span className="label-caps text-on-surface-variant" style={{ fontSize: '9px', display: 'block' }}>Resolución / Observaciones:</span>
                   <p className="body-sm text-on-surface" style={{ fontSize: '13px', marginTop: '2px' }}>{inc.resolution}</p>
                 </div>
@@ -156,7 +156,7 @@ export default function Postventa() {
         </section>
 
         {/* Survey feedback & Submission Form */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Registrar Encuesta de Satisfacción</h2>
           </div>
@@ -210,7 +210,7 @@ export default function Postventa() {
             <span className="label-caps text-secondary" style={{ display: 'block', marginBottom: '8px' }}>Comentarios Recientes</span>
             <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {surveys.map((s) => (
-                <div key={s.id} style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.01)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)' }}>
+                <div key={s.id} style={{ padding: '8px 12px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                     <span className="body-sm text-on-surface" style={{ fontWeight: 'bold' }}>{s.client}</span>
                     <span className={`badge ${s.type === 'Promotor' ? 'badge-success' : s.type === 'Pasivo' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '10px' }}>

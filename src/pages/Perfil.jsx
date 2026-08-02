@@ -126,7 +126,7 @@ export default function Perfil() {
 
       <section className="grid-2" style={{ alignItems: 'start' }}>
         {/* Columna izquierda: avatar + datos generales */}
-        <div className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <div className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Información general</h2>
@@ -173,10 +173,10 @@ export default function Perfil() {
             </div>
           </div>
 
-          {msg && <div className="m3-banner" style={{ background: 'rgba(62, 241, 181, 0.12)', borderColor: 'rgba(62, 241, 181, 0.3)' }}>
+          {msg && <div className="m3-banner" style={{ background: 'var(--tint-success)', borderColor: 'rgba(14, 159, 110, 0.3)' }}>
             <span className="label-caps text-success">{msg}</span>
           </div>}
-          {err && <div className="m3-banner" style={{ background: 'rgba(255, 180, 171, 0.12)', borderColor: 'rgba(255, 180, 171, 0.35)' }}>
+          {err && <div className="m3-banner" style={{ background: 'var(--tint-error)', borderColor: 'rgba(186, 26, 26, 0.35)' }}>
             <span className="label-caps text-error">{err}</span>
           </div>}
 
@@ -187,7 +187,7 @@ export default function Perfil() {
 
         {/* Columna derecha: datos de valor + contraseña */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--stack-lg)' }}>
-          <div className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+          <div className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
             <div className="card-header-in">
               <div>
                 <h2 className="headline-md text-on-surface">Datos de la cuenta</h2>
@@ -207,7 +207,7 @@ export default function Perfil() {
             </dl>
           </div>
 
-          <div className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+          <div className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
             <div className="card-header-in">
               <div>
                 <h2 className="headline-md text-on-surface">Cambiar contraseña</h2>
@@ -238,7 +238,7 @@ export default function Perfil() {
                       style={{
                         background: i < strength.score
                           ? ['', 'var(--error)', 'var(--secondary)', 'var(--success)'][strength.score]
-                          : 'rgba(255,255,255,0.08)',
+                          : 'var(--surface-container-highest)',
                       }}
                     />
                   ))}
@@ -249,10 +249,10 @@ export default function Perfil() {
               </div>
             )}
 
-            {passMsg && <div className="m3-banner" style={{ background: 'rgba(62, 241, 181, 0.12)', borderColor: 'rgba(62, 241, 181, 0.3)' }}>
+            {passMsg && <div className="m3-banner" style={{ background: 'var(--tint-success)', borderColor: 'rgba(14, 159, 110, 0.3)' }}>
               <span className="label-caps text-success">{passMsg}</span>
             </div>}
-            {passErr && <div className="m3-banner" style={{ background: 'rgba(255, 180, 171, 0.12)', borderColor: 'rgba(255, 180, 171, 0.35)' }}>
+            {passErr && <div className="m3-banner" style={{ background: 'var(--tint-error)', borderColor: 'rgba(186, 26, 26, 0.35)' }}>
               <span className="label-caps text-error">{passErr}</span>
             </div>}
 

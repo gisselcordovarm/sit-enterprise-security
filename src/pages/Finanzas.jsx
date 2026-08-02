@@ -160,7 +160,7 @@ export default function Finanzas() {
 
       <div className="grid-2">
         {/* Pending Invoices for Generation */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Comprobantes Listos para Facturar</h2>
             <span className="badge badge-info">{facturables.length} pendientes</span>
@@ -221,7 +221,7 @@ export default function Finanzas() {
                 key={inv.id}
                 style={{
                   padding: '16px',
-                  background: selectedInvoice?.id === inv.id ? 'rgba(94, 139, 255, 0.1)' : 'var(--surface-container-low)',
+                  background: selectedInvoice?.id === inv.id ? 'var(--tint-primary)' : 'var(--surface-container-low)',
                   border: selectedInvoice?.id === inv.id ? '1px solid var(--primary)' : '1px solid var(--outline-variant)',
                   borderRadius: 'var(--radius-lg)',
                   cursor: 'pointer',
@@ -275,7 +275,7 @@ export default function Finanzas() {
         </section>
 
         {/* Ledger Contabilidad Logs */}
-        <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)' }}>
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
           <div className="card-header-border">
             <h2 className="headline-md text-on-surface">Libro Diario de Transacciones</h2>
             <span className="badge badge-info">{financeLogs.length} asientos</span>
