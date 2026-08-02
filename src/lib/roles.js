@@ -26,6 +26,7 @@ export const MODULES = [
   { key: 'instalacion', path: '/instalacion', label: 'Instalación', icon: 'settings',         roles: [ROLES.ADMIN] },
   { key: 'finanzas',    path: '/finanzas',    label: 'Finanzas',    icon: 'payments',         roles: [ROLES.ADMIN] },
   { key: 'postventa',   path: '/postventa',   label: 'Postventa',   icon: 'support_agent',    roles: [ROLES.ADMIN] },
+  { key: 'reportes',    path: '/reportes',    label: 'Reportes',    icon: 'summarize',         roles: [ROLES.ADMIN, ROLES.BASICO] },
   { key: 'usuarios',    path: '/usuarios',    label: 'Usuarios',    icon: 'manage_accounts', roles: [ROLES.ADMIN] },
 ]
 

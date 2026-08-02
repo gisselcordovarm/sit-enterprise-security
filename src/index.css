@@ -1115,6 +1115,21 @@ background: rgba(255, 255, 255, 0.04);
 
 .avatar-img { display: inline-block; object-fit: cover; }
 
+/* Bloques de consulta SQL en el módulo de reportes */
+.sql-block {
+  margin: 0;
+  padding: 14px 16px;
+  background: rgba(3, 8, 18, 0.7);
+  border-top: 1px solid var(--outline-variant);
+  color: var(--primary-container);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
 /* ================= Perfil de usuario ================= */
 .avatar-zone {
   display: flex;
