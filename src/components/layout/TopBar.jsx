@@ -1,4 +1,10 @@
+import { useAuth } from '../../context/authContext';
+import { ROL_LABELS } from '../../lib/roles';
+
 export default function TopBar({ onToggleMobileMenu }) {
+  const { profile, rol, signOut } = useAuth();
+  const roleLabel = ROL_LABELS[rol] || rol;
+
   return (
     <header className="topbar glass-panel" style={{ 
       background: 'rgba(23, 31, 51, 0.7)', 
@@ -32,21 +38,25 @@ export default function TopBar({ onToggleMobileMenu }) {
 
       {/* Actions on Right */}
       <div className="topbar-actions" style={{ justifySelf: 'end' }}>
+
+        {/* Usuario actual */}
+        <div className="topbar-user" title={`${profile?.email || ''}`}>
+          <span className="material-symbols-outlined">account_circle</span>
+          <div style={{ lineHeight: 1.1 }}>
+            <span className="body-sm text-on-surface" style={{ fontWeight: 600 }}>{profile?.nombre || profile?.email || 'Usuario'}</span>
+            <span className="label-caps text-on-surface-variant" style={{ fontSize: '9px' }}>{roleLabel}</span>
+          </div>
+        </div>
+
         {/* System Health Status Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(62, 241, 181, 0.1)', border: '1px solid rgba(62, 241, 181, 0.2)' }}>
           <span className="notification-dot" style={{ position: 'static', display: 'inline-block', background: 'var(--success)', width: '6px', height: '6px' }}></span>
           <span className="label-caps text-success" style={{ fontSize: '10px' }}>Sistemas OK</span>
         </div>
 
-        {/* Notifications Button */}
-        <button className="icon-btn" style={{ position: 'relative' }}>
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="notification-dot"></span>
-        </button>
-
-        {/* Settings Button */}
-        <button className="icon-btn">
-          <span className="material-symbols-outlined">settings_suggest</span>
+        {/* Cerrar sesión */}
+        <button className="icon-btn" onClick={signOut} title="Cerrar sesión">
+          <span className="material-symbols-outlined">logout</span>
         </button>
       </div>
     </header>

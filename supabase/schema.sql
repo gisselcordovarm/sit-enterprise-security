@@ -507,5 +507,81 @@ INSERT INTO incidencias (id_pedido, cliente_nombre, tipo, descripcion, fecha, es
 INSERT INTO encuestas (id_pedido, cliente_nombre, nivel_satisfaccion, tipo_cliente, comentarios, fecha_contacto) VALUES
   (7844, 'Lucas Peralta', 9, 'Promotor', 'Las cámaras funcionan perfecto. Muy limpio el trabajo.', now() - interval '2 days'),
   (NULL, 'Telecom S.A.', 10, 'Promotor', 'Excelente ruteo y puntualidad técnica.', now() - interval '4 days'),
-  (7840, 'Marcos Silva', 5, 'Detractor', 'El pago dio error y tardaron en contactarme para solucionarlo.', now() - interval '5 days'),
   (NULL, 'Roberto Díaz', 8, 'Pasivo', 'El servicio es bueno, pero la app móvil tarda en conectar.', now() - interval '6 days');
+
+-- =============================================================================
+-- 7. AUTENTICACIÓN Y PERFILES DE USUARIO (ROL ADMIN / BASICO)
+-- =============================================================================
+-- La tabla de perfiles guarda el rol de cada usuario autenticado con Supabase Auth.
+-- Se crea DESPUÉS del bloque de RLS genérico para definir políticas propias
+-- (los usuarios gestionan su perfil; los administradores gestionan todos).
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email      TEXT NOT NULL UNIQUE,
+  nombre     TEXT,
+  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
+  activo     BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Función que verifica si el usuario actual es administrador.
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean
+LANGUAGE sql STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND rol = 'admin' AND activo
+  );
+$$;
+
+-- Crea automáticamente el perfil cuando se da de alta un usuario en Supabase Auth.
+-- Rol asignado: 'admin' para el correo administrador configurado, 'basico' para el resto.
+CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, nombre, rol)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data ->> 'nombre', NEW.email),
+    CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin' ELSE 'basico' END
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- RLS de perfiles: cada uno ve/edita el propio; el admin ve/gestiona todos.
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "profile_select_own" ON public.profiles;
+CREATE POLICY "profile_select_own" ON public.profiles
+  FOR SELECT TO authenticated
+  USING (id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "profile_update_own" ON public.profiles;
+CREATE POLICY "profile_update_own" ON public.profiles
+  FOR UPDATE TO authenticated
+  USING (id = auth.uid() OR public.is_admin())
+  WITH CHECK (id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "profile_insert_own" ON public.profiles;
+CREATE POLICY "profile_insert_own" ON public.profiles
+  FOR INSERT TO authenticated
+  WITH CHECK (id = auth.uid());
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT ON public.profiles TO anon;
+GRANT ALL ON public.is_admin() TO authenticated;

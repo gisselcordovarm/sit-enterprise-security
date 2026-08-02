@@ -8,14 +8,35 @@ Demo publicada en Vercel: https://sit-enterprise-security.vercel.app
 
 ## Módulos
 
-| Ruta         | Módulo                              |
-| ------------ | ----------------------------------- |
-| `/`          | Panel Central (KPIs, alertas, métricas) |
-| `/pedidos`   | Captura y validación de pedidos     |
-| `/operaciones`| Inventario y asignación de técnicos |
-| `/instalacion`| Parte técnico y firma digital      |
-| `/finanzas`  | Facturación PDF y libro contable    |
-| `/postventa` | Incidencias, encuestas y NPS        |
+| Ruta         | Módulo                              | Acceso                    |
+| ------------ | ----------------------------------- | ------------------------- |
+| `/`          | Panel Central (KPIs, alertas, métricas) | Admin · Básico        |
+| `/pedidos`   | Captura y validación de pedidos     | Admin · Básico            |
+| `/operaciones`| Asignación de técnicos             | Admin · Básico            |
+| `/instalacion`| Parte técnico y firma digital      | Admin                     |
+| `/finanzas`  | Facturación PDF y libro contable    | Admin                     |
+| `/postventa` | Incidencias, encuestas y NPS        | Admin                     |
+| `/usuarios`  | Perfiles y roles                    | Admin                     |
+
+## Autenticación y roles
+
+El sistema usa **Supabase Auth** (email + contraseña) con dos perfiles:
+
+- **Administrador** (`admin`): acceso total a todos los módulos y a Gestión de Usuarios.
+- **Usuario Básico** (`basico`): solo `Panel`, `Pedidos` y `Operaciones`.
+
+Preparación (una sola vez, en Supabase):
+
+1. En **Authentication → Users**, abrir el provider **Email** (habilitado por defecto).
+2. En **SQL Editor**, ejecutar [`supabase/auth_setup.sql`](supabase/auth_setup.sql).
+   Crea la tabla `profiles`, el trigger que asigna rol según el correo, las políticas RLS
+   y el usuario administrador por defecto:
+
+   - Usuario: `admin@tecnoinnova.com`
+- Clave: `Admin2026@!`
+
+3. Cualquier usuario nuevo que se dé de alta (via panel o sign-up) recibe rol `basico`;
+   el correo `admin@tecnoinnova.com` se eleva automáticamente a `admin`.
 
 ## Configuración de Supabase
 
@@ -25,6 +46,10 @@ Demo publicada en Vercel: https://sit-enterprise-security.vercel.app
    instalaciones, facturas, logs, seguimiento_postventa, incidencias, encuestas), vistas,
    triggers de negocio (validación de factibilidad, reserva de stock, disparo T+7 de postventa),
    políticas RLS y datos de prueba.
+
+> Nota: si ya ejecutaste `schema.sql` antes de esta versión, solo tenés que ejecutar
+> `supabase/auth_setup.sql` para agregar autenticación y roles sin tocar el resto.
+
 3. En **Project Settings → API**, copiar la URL del proyecto y la `anon` key.
 4. Crear el archivo `.env.local` (ver `.env.example`):
 

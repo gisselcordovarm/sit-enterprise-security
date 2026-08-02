@@ -687,6 +687,57 @@ export async function registrarEncuesta({ cliente, rating, comentario }) {
 }
 
 // =============================================================================
+// USUARIOS Y PERFILES (roles)
+// =============================================================================
+
+const demoProfiles = [
+  { id: 'u-admin', email: 'admin@tecnoinnova.com', nombre: 'Administrador', rol: 'admin', activo: true },
+  { id: 'u-basic', email: 'operador@tecnoinnova.com', nombre: 'Operador Site A', rol: 'basico', activo: true },
+]
+
+export async function fetchProfiles() {
+  return withFallback(async () => {
+    const { data, error } = await supabase.from('profiles').select('*').order('created_at')
+    if (error) throw error
+    return data || []
+  }, () => demoProfiles.map((p) => ({ ...p })))
+}
+
+export async function updateProfileRole(id, rol) {
+  return withFallback(async () => {
+    const { data, error } = await supabase
+      .from('profiles').update({ rol, updated_at: new Date().toISOString() })
+      .eq('id', id).select('*').single()
+    if (error) throw error
+    return data
+  }, () => {
+    const p = demoProfiles.find((x) => x.id === id)
+    if (p) p.rol = rol
+    return p || {}
+  })
+}
+
+// =============================================================================
+// DASHBOARD - distribución de pedidos por estado (gráfico donut)
+// =============================================================================
+
+const demoEstados = [
+  { estado: 'Instalado', value: 2 },
+  { estado: 'Pendiente', value: 1 },
+  { estado: 'Rechazado', value: 1 },
+]
+
+export async function fetchEstadosPedidos() {
+  return withFallback(async () => {
+    const { data, error } = await supabase.from('pedidos').select('estado')
+    if (error) throw error
+    const counts = {}
+    ;(data || []).forEach((r) => { counts[r.estado] = (counts[r.estado] || 0) + 1 })
+    return Object.entries(counts).map(([estado, value]) => ({ estado, value }))
+  }, () => [...demoEstados])
+}
+
+// =============================================================================
 // DASHBOARD
 // =============================================================================
 

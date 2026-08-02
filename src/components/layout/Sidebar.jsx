@@ -1,14 +1,13 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/authContext';
+import { modulesFor, ROL_LABELS } from '../../lib/roles';
 
 export default function Sidebar() {
-  const menuItems = [
-    { name: 'Dashboard', path: '/', icon: 'dashboard' },
-    { name: 'Pedidos', path: '/pedidos', icon: 'shopping_cart' },
-    { name: 'Operaciones', path: '/operaciones', icon: 'build' },
-    { name: 'Instalación', path: '/instalacion', icon: 'settings' },
-    { name: 'Finanzas', path: '/finanzas', icon: 'payments' },
-    { name: 'Postventa', path: '/postventa', icon: 'support_agent' },
-  ];
+  const { profile, rol, signOut } = useAuth();
+  const menuItems = modulesFor(rol);
+
+  const displayName = profile?.nombre || profile?.email || 'Usuario';
+  const roleLabel = ROL_LABELS[rol] || rol;
 
   return (
     <aside className="sidebar glass-panel">
@@ -21,26 +20,32 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-menu">
-        {menuItems.map((item) => (
+        {menuItems.length > 0 ? menuItems.map((item) => (
           <NavLink
-            key={item.path}
+            key={item.key}
             to={item.path}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             end={item.path === '/'}
           >
             <span className="material-symbols-outlined">{item.icon}</span>
-            <span className="body-md">{item.name}</span>
+            <span className="body-md">{item.label}</span>
           </NavLink>
-        ))}
+        )) : (
+          <div className="body-sm text-on-surface-variant" style={{ padding: '8px 16px' }}>Sin módulos disponibles</div>
+        )}
       </nav>
 
       <div className="sidebar-footer">
-        <button className="user-profile">
+        <div className="user-profile">
           <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100&h=100" alt="Usuario" />
           <div className="user-info">
-            <span className="body-sm text-on-surface" style={{ fontWeight: '600' }}>Gissel Cordova</span>
-            <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>Admin Operaciones</span>
+            <span className="body-sm text-on-surface" style={{ fontWeight: '600' }}>{displayName}</span>
+            <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>{roleLabel}</span>
           </div>
+        </div>
+        <button className="btn btn-ghost sidebar-logout" onClick={signOut}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
+          <span className="body-sm">Cerrar sesión</span>
         </button>
       </div>
     </aside>

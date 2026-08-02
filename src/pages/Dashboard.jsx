@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DataStatus from '../components/common/DataStatus';
-import { fetchKpis, fetchAlertas, fetchMetricasSemanales } from '../lib/data';
+import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos } from '../lib/data';
 
 export default function Dashboard() {
   const [selectedAlert, setSelectedAlert] = useState(null);
@@ -10,17 +10,19 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState({ pedidosTotales: 0, incidenciasAbiertas: 0, tecnicosActivos: 0, tecnicosTotales: 0, nps: 0 });
   const [alerts, setAlerts] = useState([]);
   const [semana, setSemana] = useState({ op: [], ing: [] });
+  const [estados, setEstados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchKpis(), fetchAlertas(), fetchMetricasSemanales()])
-      .then(([kpiData, alertData, weekData]) => {
+    Promise.all([fetchKpis(), fetchAlertas(), fetchMetricasSemanales(), fetchEstadosPedidos()])
+      .then(([kpiData, alertData, weekData, estadoData]) => {
         if (!active) return;
         setKpis(kpiData);
         setAlerts(alertData);
         setSemana(weekData);
+        setEstados(estadoData);
         setLiveError(null);
       })
       .catch(() => {
@@ -47,6 +49,17 @@ export default function Dashboard() {
   };
 
   const chartData = buildChart(chartMetric === 'OP' ? semana.op : semana.ing);
+
+  // ==== Donut de distribución por estado de pedido ====
+  const ESTADO_COLORS = ['#5e8bff', '#3ef1b5', '#dcb8ff', '#ff886b', '#8a93a6'];
+  const estadoTotal = estados.reduce((s, e) => s + e.value, 0);
+  const CIRC = 2 * Math.PI * 54;
+  const donutSegs = estados.reduce((acc, e, i) => {
+    const len = estadoTotal ? (e.value / estadoTotal) * CIRC : 0;
+    acc.list.push({ ...e, len, offset: -acc.total, color: ESTADO_COLORS[i % ESTADO_COLORS.length] });
+    acc.total += len;
+    return acc;
+  }, { list: [], total: 0 }).list;
 
   const kpiCards = [
     { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: '+14%', trendUp: true, icon: 'shopping_bag', colorClass: 'text-primary', containerBg: 'rgba(94, 139, 255, 0.1)' },
@@ -254,7 +267,52 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {/* Modal for alert details */}
+      {/* Distribución de pedidos por estado */}
+      <section className="card glass-panel" style={{ background: 'rgba(23, 31, 51, 0.55)', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginTop: '24px' }}>
+        <div>
+          <div className="card-header-border">
+            <h2 className="headline-md text-on-surface">Distribución de Pedidos</h2>
+            <span className="body-sm text-on-surface-variant">Estado actual de todos los pedidos registrados</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '280px' }}>
+            {estadoTotal > 0 ? (
+              <svg viewBox="0 0 140 140" width="230" height="230">
+                <circle cx="70" cy="70" r="54" fill="none" stroke="var(--outline-variant)" strokeWidth="20" opacity="0.3" />
+                {donutSegs.map((s, i) => (
+                  <circle
+                    key={i}
+                    cx="70" cy="70" r="54" fill="none"
+                    stroke={s.color} strokeWidth="20"
+                    strokeDasharray={`${s.len} ${CIRC - s.len}`}
+                    strokeDashoffset={s.offset}
+                    transform="rotate(-90 70 70)"
+                    strokeLinecap="butt"
+                  >
+                    <title>{`${s.estado}: ${s.value}`}</title>
+                  </circle>
+                ))}
+                <text x="70" y="66" textAnchor="middle" fill="var(--on-surface)" fontSize="26" fontFamily="var(--font-mono)" fontWeight="bold">{estadoTotal}</text>
+                <text x="70" y="84" textAnchor="middle" fill="var(--on-surface-variant)" fontSize="10" fontFamily="var(--font-body)">pedidos</text>
+              </svg>
+            ) : (
+              <p className="body-md text-on-surface-variant">Sin datos</p>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+          {donutSegs.length > 0 ? donutSegs.map((s, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--outline-variant)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '4px', background: s.color, display: 'inline-block' }} />
+                <span className="body-sm text-on-surface">{s.estado}</span>
+              </div>
+              <span className="label-caps" style={{ color: 'var(--on-surface-variant)' }}>{estadoTotal ? Math.round((s.value / estadoTotal) * 100) : 0}% · {s.value}</span>
+            </div>
+          )) : <p className="body-md text-on-surface-variant">Sin datos</p>}
+        </div>
+      </section>
+
+      {/* Modal de la alerta */}
       {selectedAlert && (
         <div className="modal-overlay" onClick={() => setSelectedAlert(null)}>
           <div className="modal-content glass-panel" style={{ background: '#131b2e' }} onClick={(e) => e.stopPropagation()}>
