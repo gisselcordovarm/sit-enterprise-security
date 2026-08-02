@@ -3,6 +3,7 @@ import { useAuth } from '../context/authContext'
 import { ROL_LABELS } from '../lib/roles'
 import { checkPasswordStrength } from '../lib/roles'
 import { formatDate } from '../lib/data'
+import { formatVzPhone, normalizeVzPhone } from '../lib/format'
 
 // Reduce cualquier imagen a un dataURL pequeño (256px) para guardarla en el perfil.
 function readAsDataUrl(file) {
@@ -77,10 +78,28 @@ export default function Perfil() {
     setSaving(true)
     setMsg('')
     setErr('')
-    const error = await updateProfile({ nombre, cargo, telefono, foto })
+
+    // Teléfono: si se ingresó algo, debe ser un teléfono venezolano válido (+58).
+    let phoneFinal = telefono
+    if (telefono && telefono.trim() !== '') {
+      const check = normalizeVzPhone(telefono)
+      if (!check.ok) {
+        setSaving(false)
+        setErr(check.error)
+        return
+      }
+      phoneFinal = check.value
+    } else {
+      phoneFinal = ''
+    }
+
+    const error = await updateProfile({ nombre, cargo, telefono: phoneFinal, foto })
     setSaving(false)
     if (error) setErr(error)
-    else setMsg('Datos actualizados correctamente.')
+    else {
+      setTelefono(phoneFinal)
+      setMsg('Datos actualizados correctamente.')
+    }
   }
 
   async function guardarPassword() {
@@ -167,8 +186,16 @@ export default function Perfil() {
                 <input className="form-input" value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ej. Administrador de sistemas" />
               </div>
               <div className="form-group">
-                <label>Teléfono</label>
-                <input className="form-input" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej. +54 9 11 5555 5555" />
+                <label>Teléfono (Venezuela +58)</label>
+                <input
+                  className="form-input"
+                  value={telefono ? formatVzPhone(telefono) : ''}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  placeholder="+58 412 123-4567"
+                  inputMode="tel"
+                  maxLength={16}
+                />
+                <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: 'var(--on-surface-variant)' }}>Formato venezolano: +58 código de área + 7 dígitos.</span>
               </div>
             </div>
           </div>
