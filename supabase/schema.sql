@@ -441,11 +441,11 @@ INSERT INTO inventario (codigo_equipo, descripcion_equipo, stock_disponible, umb
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tecnicos (nombre_tecnico, especialidad, zona_geografica, disponibilidad, carga_trabajo) VALUES
-  ('Ariel Ramírez', 'Instalación Cámaras', 'Oeste', true, 2),
-  ('Carlos Ortega', 'Alarmas / CCT', 'Norte', true, 4),
-  ('Marcos Benítez', 'Redes / Cámaras IP', 'Norte', true, 1),
-  ('Sofía Herrera', 'Mantenimiento', 'Sur', true, 0),
-  ('Diego Torres', 'UPS / Energía', 'Este', true, 3)
+  ('Ariel Ramírez', 'Instalación Cámaras', 'Distrito Capital', true, 2),
+  ('Carlos Ortega', 'Alarmas / CCT', 'Miranda', true, 4),
+  ('Marcos Benítez', 'Redes / Cámaras IP', 'Carabobo', true, 1),
+  ('Sofía Herrera', 'Mantenimiento', 'Aragua', true, 0),
+  ('Diego Torres', 'UPS / Energía', 'Zulia', true, 3)
 ON CONFLICT DO NOTHING;
 
 -- Fechas relativas a CURRENT_DATE para que el dashboard semanal muestre datos.
@@ -453,11 +453,11 @@ ON CONFLICT DO NOTHING;
 -- de la demo: SIT-7844 (Lucas), SIT-7842 (Consorcio), SIT-7840 (Marcos), SIT-7839 (Clínica), SIT-7848 (YPF)
 INSERT INTO pedidos (id_pedido, id_cliente, cliente_nombre, origen, tipo_servicio, zona_geografica, cobertura_zona, fecha_pedido, monto_total, factibilidad_ok, pago_status, estado)
 OVERRIDING SYSTEM VALUE VALUES
-(7844, 1, 'Lucas Peralta', 'Web', 'Cámaras Residenciales', 'Norte', true, CURRENT_DATE - 1, 350, true, 'Aprobado', 'Instalado'),
-  (7842, 2, 'Consorcio Las Heras', 'Call Center', 'Monitoreo 24/7', 'Norte', false, CURRENT_DATE - 2, 1200, false, 'Aprobado', 'Rechazado'),
-  (7840, 3, 'Marcos Silva', 'Call Center', 'Control de Acceso Rfid', 'Este', true, CURRENT_DATE - 3, 850, true, 'Rechazado', 'Pendiente'),
-  (7839, 4, 'Clínica del Parque', 'Web', 'Alarma de Incendios + CCT', 'Sur', true, CURRENT_DATE - 4, 6800, true, 'Aprobado', 'Instalado'),
-  (7848, 7, 'Estación YPF', 'Call Center', 'Cámaras IP Corporativas', 'Norte', true, CURRENT_DATE - 2, 9000, true, 'Aprobado', 'Instalado');
+(7844, 1, 'Lucas Peralta', 'Web', 'Cámaras Residenciales', 'Distrito Capital', true, CURRENT_DATE - 1, 350, true, 'Aprobado', 'Instalado'),
+  (7842, 2, 'Consorcio Las Heras', 'Call Center', 'Monitoreo 24/7', 'Zulia', false, CURRENT_DATE - 2, 1200, false, 'Aprobado', 'Rechazado'),
+  (7840, 3, 'Marcos Silva', 'Call Center', 'Control de Acceso Rfid', 'Carabobo', true, CURRENT_DATE - 3, 850, true, 'Rechazado', 'Pendiente'),
+  (7839, 4, 'Clínica del Parque', 'Web', 'Alarma de Incendios + CCT', 'Distrito Capital', true, CURRENT_DATE - 4, 6800, true, 'Aprobado', 'Instalado'),
+  (7848, 7, 'Estación YPF', 'Call Center', 'Cámaras IP Corporativas', 'Bolívar', true, CURRENT_DATE - 2, 9000, true, 'Aprobado', 'Instalado');
 
 -- Motivos de rechazo explícitos (documentación: notificacion_rechazo)
 UPDATE pedidos SET motivo_factibilidad = 'Sin cobertura de fibra en coordenadas indicadas.' WHERE id_pedido = 7842;
@@ -471,14 +471,14 @@ INSERT INTO detalle_pedido (id_pedido, id_equipo, cantidad_solicitada) VALUES
   (7839, 102, 2);
 
 INSERT INTO tareas (cliente_nombre, zona_geografica, servicio, estado) VALUES
-  ('Banco Nación', 'Norte', 'Instalación Alarma de Incendios', 'Pendiente'),
-  ('Gimnasio FitLife', 'Sur', 'Mantenimiento Cámaras', 'Pendiente'),
-  ('Residencia Olivos', 'Oeste', 'Instalación Sensores PIR', 'Pendiente'),
-  ('Depósito Puerto', 'Este', 'Reemplazo de Baterías UPS', 'Pendiente');
+  ('Banco Nación', 'Miranda', 'Instalación Alarma de Incendios', 'Pendiente'),
+  ('Gimnasio FitLife', 'Aragua', 'Mantenimiento Cámaras', 'Pendiente'),
+  ('Residencia Olivos', 'Distrito Capital', 'Instalación Sensores PIR', 'Pendiente'),
+  ('Depósito Puerto', 'Carabobo', 'Reemplazo de Baterías UPS', 'Pendiente');
 
 -- Asignación en ejecución (Estación YPF -> Marcos Benítez)
 INSERT INTO tareas (cliente_nombre, zona_geografica, servicio, estado, id_tecnico, id_pedido, fecha_asignacion)
-VALUES ('Estación YPF', 'Norte', 'Instalación Cámaras IP', 'Asignado', 3, 7848, now() - interval '3 hours');
+VALUES ('Estación YPF', 'Bolívar', 'Instalación Cámaras IP', 'Asignado', 3, 7848, now() - interval '3 hours');
 
 -- Instalaciones completadas (disparan estado 'Instalado' + seguimiento T+7)
 INSERT INTO instalaciones (id_pedido, id_tecnico, fecha_programada, estado, reporte_firmado, materiales, notas, fecha_ejecucion) VALUES
