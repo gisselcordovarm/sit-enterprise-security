@@ -5,6 +5,7 @@ import {
   fetchFacturas, fetchFacturables, generarFactura,
   fetchLogs, registrarLog,
 } from '../lib/data';
+import { formatMoney } from '../lib/format';
 
 export default function Finanzas() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -78,7 +79,7 @@ export default function Finanzas() {
       doc.setTextColor(0, 0, 0);
       doc.setFont('Helvetica', 'bold');
       doc.text('Descripción del Servicio', 20, 91);
-      doc.text('Importe (ARS)', 150, 91);
+      doc.text('Importe (USD)', 150, 91);
 
       // Items Row
       doc.setFont('Helvetica', 'normal');
@@ -95,7 +96,7 @@ export default function Finanzas() {
       doc.setFontSize(14);
       doc.setFont('Helvetica', 'bold');
       doc.text('TOTAL FACTURADO:', 95, 155);
-      doc.text(`$${inv.total.toLocaleString()} ARS`, 145, 155);
+      doc.text(formatMoney(inv.total), 150, 155);
 
       doc.save(`Factura-${inv.id}-${inv.cliente.replace(/\s+/g, '-')}.pdf`);
     } catch (error) {
@@ -189,7 +190,7 @@ export default function Finanzas() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span className="body-md text-success" style={{ fontWeight: 'bold', display: 'block' }}>
-                        ${fac.total.toLocaleString()}
+                        {formatMoney(fac.total)}
                       </span>
                       <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>Instalado</span>
                     </div>
@@ -235,7 +236,7 @@ export default function Finanzas() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <span className="body-md text-success" style={{ fontWeight: 'bold', display: 'block' }}>
-                      ${inv.total.toLocaleString()}
+                      {formatMoney(inv.total)}
                     </span>
                     <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>{inv.fecha}</span>
                   </div>
@@ -303,7 +304,7 @@ export default function Finanzas() {
                     </td>
                     <td>
                       <span className="body-sm" style={{ fontWeight: 'bold', color: log.monto > 0 ? 'var(--success)' : log.monto === 0 ? 'var(--on-surface-variant)' : 'var(--error)' }}>
-                        {log.monto === 0 ? 'N/A' : `$${log.monto.toLocaleString()}`}
+                        {log.monto === 0 ? 'N/A' : formatMoney(log.monto)}
                       </span>
                     </td>
                     <td>

@@ -29,10 +29,10 @@ export function formatDate(dateStr) {
 // =============================================================================
 
 const demoPedidos = [
-  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 145000, fecha: '2026-06-11', error_pago: null, motivoFeat: null },
-  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 420000, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas' },
-  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 85000, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null },
-  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 1200000, fecha: '2026-06-08', error_pago: null, motivoFeat: null },
+  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 145000, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', zona: 'Caracas, Libertador, Distrito Capital' },
+  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 420000, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', zona: 'Maracaibo, Maracaibo, Zulia' },
+  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 85000, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, zona: 'Valencia, Valencia, Carabobo' },
+  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 1200000, fecha: '2026-06-08', error_pago: null, motivoFeat: null, zona: 'Maracay, Girardot, Aragua' },
 ]
 
 const demoInventario = [
@@ -44,22 +44,22 @@ const demoInventario = [
 ]
 
 const demoTecnicos = [
-  { id: 'TECH-01', name: 'Ariel Ramírez', zone: 'Oeste', workload: 2, status: 'Activo' },
-  { id: 'TECH-02', name: 'Carlos Ortega', zone: 'Norte', workload: 4, status: 'Activo' },
-  { id: 'TECH-03', name: 'Marcos Benítez', zone: 'Norte', workload: 1, status: 'Activo' },
-  { id: 'TECH-04', name: 'Sofía Herrera', zone: 'Sur', workload: 0, status: 'Activo' },
-  { id: 'TECH-05', name: 'Diego Torres', zone: 'Este', workload: 3, status: 'Activo' },
+  { id: 'TECH-01', name: 'Ariel Ramírez', zone: 'Distrito Capital', workload: 2, status: 'Activo' },
+  { id: 'TECH-02', name: 'Carlos Ortega', zone: 'Miranda', workload: 4, status: 'Activo' },
+  { id: 'TECH-03', name: 'Marcos Benítez', zone: 'Carabobo', workload: 1, status: 'Activo' },
+  { id: 'TECH-04', name: 'Sofía Herrera', zone: 'Aragua', workload: 0, status: 'Activo' },
+  { id: 'TECH-05', name: 'Diego Torres', zone: 'Zulia', workload: 3, status: 'Activo' },
 ]
 
 const demoPendingTasks = [
-  { id: 'TSK-908', client: 'Banco Nación', zone: 'Norte', service: 'Instalación Alarma de Incendios' },
-  { id: 'TSK-909', client: 'Gimnasio FitLife', zone: 'Sur', service: 'Mantenimiento Cámaras' },
-  { id: 'TSK-910', client: 'Residencia Olivos', zone: 'Oeste', service: 'Instalación Sensores PIR' },
-  { id: 'TSK-911', client: 'Depósito Puerto', zone: 'Este', service: 'Reemplazo de Baterías UPS' },
+  { id: 'TSK-908', client: 'Banco Nación', zone: 'Miranda', service: 'Instalación Alarma de Incendios' },
+  { id: 'TSK-909', client: 'Gimnasio FitLife', zone: 'Aragua', service: 'Mantenimiento Cámaras' },
+  { id: 'TSK-910', client: 'Residencia Olivos', zone: 'Distrito Capital', service: 'Instalación Sensores PIR' },
+  { id: 'TSK-911', client: 'Depósito Puerto', zone: 'Carabobo', service: 'Reemplazo de Baterías UPS' },
 ]
 
 const demoAssignments = [
-  { id: 'ASG-701', task: 'Instalación Cámaras IP', client: 'Estación YPF', zone: 'Norte', tech: 'Marcos Benítez', status: 'En camino' },
+  { id: 'ASG-701', task: 'Instalación Cámaras IP', client: 'Estación YPF', zone: 'Aragua', tech: 'Marcos Benítez', status: 'En camino' },
 ]
 
 const demoInstalaciones = [
@@ -171,6 +171,10 @@ const mapPedido = (r) => ({
   error_pago: r.error_pago,
   motivoFeat: r.motivo_factibilidad,
   estado: r.estado,
+  geoEstado: r.geo_estado,
+  municipio: r.municipio,
+  ciudad: r.ciudad,
+  zona: r.zona_geografica || '',
 })
 
 export async function fetchPedidos() {
@@ -196,7 +200,14 @@ export async function crearPedido(payload) {
     if (!idCliente) {
       const { data: newClient, error: cErr } = await supabase
         .from('clientes')
-        .insert({ nombre_cliente: payload.cliente, zona_geografica: payload.zona, direccion: payload.direccion || '' })
+        .insert({
+          nombre_cliente: payload.cliente,
+          zona_geografica: [payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', '),
+          geo_estado: payload.estado || null,
+          municipio: payload.municipio || null,
+          ciudad: payload.ciudad || null,
+          direccion: payload.direccion || '',
+        })
         .select('id_cliente').single()
       if (cErr) throw cErr
       idCliente = newClient.id_cliente
@@ -209,7 +220,10 @@ export async function crearPedido(payload) {
         cliente_nombre: payload.cliente,
         origen: payload.origen,
         tipo_servicio: payload.servicio,
-        zona_geografica: payload.zona,
+        zona_geografica: [payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', '),
+        geo_estado: payload.estado || null,
+        municipio: payload.municipio || null,
+        ciudad: payload.ciudad || null,
         direccion: payload.direccion || null,
         cobertura_zona: status.factibilidad,
         monto_total: payload.total,
@@ -243,6 +257,7 @@ export async function crearPedido(payload) {
 export function crearPedidoDemo(payload) {
   const status = computeOrderStatus(payload)
   const orderId = `SIT-${Math.floor(1000 + Math.random() * 9000)}`
+  const zona = [payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', ')
   const newOrder = {
     id: orderId,
     cliente: payload.cliente,
@@ -255,6 +270,7 @@ export function crearPedidoDemo(payload) {
     fecha: new Date().toISOString().split('T')[0],
     error_pago: status.error_pago,
     motivoFeat: status.motivoFeat,
+    zona,
   }
   return newOrder
 }

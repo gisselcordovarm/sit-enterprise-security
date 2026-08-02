@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import DataStatus from '../components/common/DataStatus';
+import ZonaVe from '../components/common/ZonaVe';
 import { fetchPedidos, crearPedido, fetchInventario, defaultEquipoCodigo } from '../lib/data';
+import { formatMoney } from '../lib/format';
 
 export default function Pedidos() {
   const [orders, setOrders] = useState([]);
@@ -13,7 +15,9 @@ export default function Pedidos() {
     cliente: '',
     origen: 'Web',
     servicio: 'Cámaras Residenciales',
-    zona: 'Norte',
+    estado: '',
+    municipio: '',
+    ciudad: '',
     direccion: '',
     coberturaFibra: 'SI',
     tarjetaLimite: 'SUFICIENTE',
@@ -89,7 +93,9 @@ export default function Pedidos() {
       cliente: '',
       origen: 'Web',
       servicio: 'Cámaras Residenciales',
-      zona: 'Norte',
+      estado: '',
+      municipio: '',
+      ciudad: '',
       direccion: '',
       coberturaFibra: 'SI',
       tarjetaLimite: 'SUFICIENTE',
@@ -191,32 +197,26 @@ export default function Pedidos() {
               </div>
             </div>
 
-            <div className="grid-2" style={{ gap: '12px', marginBottom: '0' }}>
-              <div className="form-group">
-                <label>Zona de Instalación</label>
-                <select
-                  className="form-select"
-                  value={formData.zona}
-                  onChange={(e) => setFormData({ ...formData, zona: e.target.value })}
-                >
-                  <option value="Norte">Zona Norte</option>
-                  <option value="Sur">Zona Sur</option>
-                  <option value="Este">Zona Este</option>
-                  <option value="Oeste">Zona Oeste</option>
-                </select>
+            <div className="form-group">
+                <label>Zona de Instalación (Venezuela)</label>
+                <ZonaVe
+                  value={{ estado: formData.estado, municipio: formData.municipio, ciudad: formData.ciudad }}
+                  onChange={(z) => setFormData({ ...formData, ...z })}
+                />
               </div>
               <div className="form-group">
-                <label>Monto Total (ARS)</label>
+                <label>Monto Total (USD)</label>
                 <input
                   type="number"
-                  placeholder="Monto en pesos"
+                  min="0"
+                  step="0.01"
+                  placeholder="Monto en dólares"
                   className="form-input"
                   value={formData.total}
                   onChange={(e) => setFormData({ ...formData, total: e.target.value })}
                   required
                 />
               </div>
-            </div>
 
             {/* Líneas de pedido (reservan stock del inventario) */}
             <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--outline-variant)', marginBottom: 'var(--stack-lg)' }}>
@@ -335,7 +335,8 @@ export default function Pedidos() {
                     </td>
                     <td>
                       <span className="body-sm text-on-surface" style={{ display: 'block' }}>{order.cliente}</span>
-                      <span className="label-caps text-primary" style={{ fontSize: '10px' }}>${order.total.toLocaleString()}</span>
+                      <span className="label-caps text-primary" style={{ fontSize: '10px' }}>{formatMoney(order.total)}</span>
+                      {order.zona && <span className="label-caps text-on-surface-variant" style={{ fontSize: '9px', display: 'block' }}>{order.zona}</span>}
                     </td>
                     <td>
                       <span className={`badge ${order.factibilidad === 'Aprobada' ? 'badge-success' : 'badge-error'}`}>
