@@ -95,7 +95,8 @@ export default function Reportes() {
 
   const exportInventario = () => {
     exportarXLSX('Listado_inventario', ['Código', 'Componente', 'Stock', 'Mínimo', 'Auto-reorder', 'Reposición'],
-      inventario.map((i) => [i.id, i.name, i.stock, i.minThreshold, i.autoReorder ? 'Sí' : 'No', i.reorderStatus]))
+      inventario.map((i) => [i.id, i.name, i.stock, i.minThreshold, i.autoReorder ? 'Sí' : 'No', i.reorderStatus]),
+      { colWidths: [12, 30, 10, 10, 14, 14], moneda: [] })
     setNota('Listado de inventario exportado a Excel (.XLS).')
   }
 

@@ -32,24 +32,69 @@ export function exportarCSV(nombre, columnas, filas) {
 }
 
 // ---- XLS mediante formato SpreadsheetXML 2003 (abre en Excel) --------------
-export function exportarXLSX(nombre, columnas, filas) {
+export function exportarXLSX(nombre, columnas, filas, opciones = {}) {
   const xml = (v) => String(v == null ? '' : v)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-  let filasXml = `<Row><Cell><Data ss:Type="String">SIT · TecnoInnova — Empresa de Seguridad</Data></Cell></Row>
-<Row>`
+  const {
+    colWidths = [],    // anchos personalizados por columna (en caracteres)
+    moneda = [],       // índices de columnas que son monetarias
+  } = opciones
+
+  // Calcular anchos de columna (mínimo 12, máximo 40)
+  const widths = columnas.map((_, i) => {
+    if (colWidths[i]) return colWidths[i]
+    const maxLen = Math.max(columnas[i].length, ...filas.map(f => String(f[i] ?? '').length))
+    return Math.min(40, Math.max(12, maxLen + 4))
+  })
+
+  let filasXml = ''
+
+  // Fila de titulo (celda combinada visualmente)
+  filasXml += `<Row>
+    <Cell ss:StyleID="title"><Data ss:Type="String">SIT · TecnoInnova — Empresa de Seguridad</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="subtitle"><Data ss:Type="String">${xml(nombre.replace(/\.xlsx?$/, ''))}</Data></Cell>
+  </Row>
+  <Row><Cell ss:StyleID="spacer"><Data ss:Type="String"></Data></Cell></Row>`
+
+  // Fila de encabezados
+  filasXml += '<Row>'
   columnas.forEach((c) => {
     filasXml += `<Cell ss:StyleID="head"><Data ss:Type="String">${xml(c)}</Data></Cell>`
   })
   filasXml += '</Row>'
-  filas.forEach((f) => {
+
+  // Filas de datos con estilo zebra
+  filas.forEach((f, rowIdx) => {
     filasXml += '<Row>'
-    f.forEach((v) => {
+    f.forEach((v, colIdx) => {
       const esNumero = typeof v === 'number' && !Number.isNaN(v)
-      filasXml += `<Cell><Data ss:Type="${esNumero ? 'Number' : 'String'}">${esNumero ? v : xml(v)}</Data></Cell>`
+      const esMoneda = moneda.includes(colIdx)
+      const style = rowIdx % 2 === 0 ? 'rowEven' : 'rowOdd'
+      if (esMoneda && esNumero) {
+        filasXml += `<Cell ss:StyleID="${style}"><Data ss:Type="Number">${v}</Data></Cell>`
+      } else if (esNumero) {
+        filasXml += `<Cell ss:StyleID="${style}"><Data ss:Type="Number">${v}</Data></Cell>`
+      } else {
+        filasXml += `<Cell ss:StyleID="${style}"><Data ss:Type="String">${xml(v)}</Data></Cell>`
+      }
     })
     filasXml += '</Row>'
   })
+
+  // Fila de resumen
+  filasXml += `<Row><Cell ss:StyleID="spacer"><Data ss:Type="String"></Data></Cell></Row>
+  <Row>
+    <Cell ss:StyleID="footer"><Data ss:Type="String">Total registros: ${filas.length}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="footer"><Data ss:Type="String">Generado: ${new Date().toLocaleDateString('es-VE')} ${new Date().toLocaleTimeString('es-VE')}</Data></Cell>
+  </Row>`
+
+  // Definir anchos de columna
+  const tableCols = widths.map(w => `<Column ss:Width="${w * 7}"/>`).join('\n ')
 
   const wb =
     `<?xml version="1.0"?>
@@ -60,12 +105,48 @@ export function exportarXLSX(nombre, columnas, filas) {
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:html="http://www.w3.org/TR/REC-html40">
 <Styles>
- <Style ss:ID="head">
-  <Font ss:Bold="1" ss:Color="#3E5C9A"/>
- </Style>
+  <Style ss:ID="title">
+    <Font ss:Bold="1" ss:Size="14" ss:Color="#0F172A"/>
+    <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="subtitle">
+    <Font ss:Size="11" ss:Color="#4e47cf"/>
+    <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="spacer">
+    <Font ss:Size="6"/>
+  </Style>
+  <Style ss:ID="head">
+    <Font ss:Bold="1" ss:Size="10" ss:Color="#FFFFFF"/>
+    <Interior ss:Color="#4e47cf" ss:Pattern="Solid"/>
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3a35b0"/>
+    </Borders>
+  </Style>
+  <Style ss:ID="rowEven">
+    <Font ss:Size="10" ss:Color="#181c21"/>
+    <Interior ss:Color="#f8f9ff" ss:Pattern="Solid"/>
+    <Alignment ss:Vertical="Center"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e0e2e9"/>
+    </Borders>
+  </Style>
+  <Style ss:ID="rowOdd">
+    <Font ss:Size="10" ss:Color="#181c21"/>
+    <Interior ss:Color="#ffffff" ss:Pattern="Solid"/>
+    <Alignment ss:Vertical="Center"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e0e2e9"/>
+    </Borders>
+  </Style>
+  <Style ss:ID="footer">
+    <Font ss:Size="9" ss:Color="#777586" ss:Italic="1"/>
+    <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+  </Style>
 </Styles>
 <Worksheet ss:Name="${xml(nombre.replace(/\.xlsx?$/, ''))}">
-<Table>
+<Table ${tableCols}>
 ${filasXml}
 </Table>
 </Worksheet>
