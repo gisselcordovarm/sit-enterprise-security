@@ -42,6 +42,7 @@ const demoInventario = [
   { id: 'INV-103', dbId: 'INV-103', name: 'Panel Alarma Híbrido', stock: 8, minThreshold: 5, autoReorder: false, lastReorderDate: null, reorderStatus: 'Ninguno' },
   { id: 'INV-104', dbId: 'INV-104', name: 'Cable Coaxial RG6 (Rollo)', stock: 25, minThreshold: 20, autoReorder: true, lastReorderDate: null, reorderStatus: 'Ninguno' },
   { id: 'INV-105', dbId: 'INV-105', name: 'Batería Respaldo 12V', stock: 2, minThreshold: 8, autoReorder: true, lastReorderDate: '2026-06-11', reorderStatus: 'Despachado' },
+  { id: 'INV-106', dbId: 'INV-106', name: 'Control de Acceso RFID', stock: 6, minThreshold: 4, autoReorder: true, lastReorderDate: null, reorderStatus: 'Ninguno' },
 ]
 
 const demoTecnicos = [

@@ -1,8 +1,8 @@
 // =============================================================================
 // MODELO DE ROLES Y PERMISOS DEL SISTEMA (SIT Enterprise Security)
-// Dos niveles de acceso segÃ£n el documento de especificaciÃ³n:
-//   - ADMIN  (Usuario Administrador): acceso total a todos los mÃ³dulos.
-//   - BASICO (Usuario BÃ¡sico)       : acceso sÃ³ector a Pedidos y Operaciones.
+// Dos niveles de acceso según el documento de especificación:
+//   - ADMIN  (Usuario Administrador): acceso total a todos los módulos.
+//   - BASICO (Usuario Básico)       : acceso a Pedidos y Operaciones.
 // =============================================================================
 
 export const ROLES = {

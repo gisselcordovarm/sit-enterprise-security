@@ -27,6 +27,7 @@ export default function Pedidos() {
   // Líneas de pedido (equipos a reservar del inventario)
   const [lineas, setLineas] = useState([]);
   const [formAlert, setFormAlert] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -77,16 +78,27 @@ export default function Pedidos() {
   // Form submit handler
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
-    if (!formData.cliente || !formData.total) {
-      setFormAlert({ type: 'warning', msg: 'Por favor complete el nombre del cliente y el monto total.' });
+    if (saving) return;
+    if (!formData.cliente || formData.total == null || String(formData.total).trim() === '' || Number(formData.total) <= 0) {
+      setFormAlert({ type: 'warning', msg: 'Por favor complete el nombre del cliente y un monto total mayor a cero.' });
       return;
     }
 
-    const newOrder = await crearPedido({
-      ...formData,
-      total: parseFloat(formData.total),
-      lineas: lineas.map((l) => ({ id_equipo: l.id_equipo, cantidad: l.cantidad })),
-    });
+    setSaving(true);
+    setFormAlert(null);
+    let newOrder;
+    try {
+      newOrder = await crearPedido({
+        ...formData,
+        total: parseFloat(formData.total),
+        lineas: lineas.map((l) => ({ id_equipo: l.id_equipo, cantidad: l.cantidad })),
+      });
+    } catch (err) {
+      console.error(err);
+      setFormAlert({ type: 'error', msg: 'No se pudo registrar el pedido. Intente de nuevo.' });
+      setSaving(false);
+      return;
+    }
 
     setOrders((prev) => [newOrder, ...prev]);
     setFormData({
@@ -111,6 +123,7 @@ export default function Pedidos() {
         msg: `Pedido ${newOrder.id} registrado pero RECHAZADO: ${newOrder.factibilidad !== 'Aprobada' ? 'Fallo técnico (factibilidad/stock).' : ''} ${newOrder.pagoStatus !== 'Aprobado' ? 'Fallo financiero (error_pago).' : ''}`,
       });
     }
+    setSaving(false);
   };
 
   return (
@@ -301,9 +314,9 @@ export default function Pedidos() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-              <span className="material-symbols-outlined">verified_user</span>
-              Validar y Registrar Pedido
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saving}>
+              <span className="material-symbols-outlined">{saving ? 'hourglass_top' : 'verified_user'}</span>
+              {saving ? 'Registrando...' : 'Validar y Registrar Pedido'}
             </button>
           </form>
         </section>
@@ -351,7 +364,7 @@ export default function Pedidos() {
                     <td>
                       {order.flag_aprobado ? (
                         <span className="badge badge-success" style={{ fontWeight: 'bold' }}>
-                          flag_aprobado
+                          Autorizado
                         </span>
                       ) : (
                         <div>
@@ -359,7 +372,7 @@ export default function Pedidos() {
                             Rechazado
                           </span>
                           <span className="label-caps text-error" style={{ fontSize: '9px', display: 'block', textTransform: 'none' }}>
-                            {order.error_pago ? 'error_pago' : 'error_factibilidad'}
+                            {order.error_pago ? 'Error de pago' : 'Error de factibilidad'}
                           </span>
                         </div>
                       )}

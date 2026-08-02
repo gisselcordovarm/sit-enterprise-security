@@ -23,6 +23,7 @@ export default function Postventa() {
   const [inciDesc, setInciDesc] = useState('');
   const [inciResol, setInciResol] = useState('');
   const [busyIncidencia, setBusyIncidencia] = useState(false);
+  const [busySurvey, setBusySurvey] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
@@ -60,7 +61,10 @@ export default function Postventa() {
   // Submit survey
   const handleSurveySubmit = async (e) => {
     e.preventDefault();
+    if (busySurvey) return;
     if (!newClient) return;
+    setBusySurvey(true);
+    setAlertMsg(null);
     try {
       const ratingVal = parseInt(newRating);
       const newSurvey = await registrarEncuesta({
@@ -76,6 +80,8 @@ export default function Postventa() {
     } catch (e) {
       console.error('Error al registrar encuesta:', e);
       setAlertMsg({ type: 'error', text: 'No se pudo registrar la encuesta. Verificá la conexión e intentá de nuevo.' });
+    } finally {
+      setBusySurvey(false);
     }
   };
 
@@ -167,7 +173,7 @@ export default function Postventa() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '12px' }}>
             <span className="display-lg text-success" style={{ fontSize: '36px', lineHeight: '1' }}>{slaCompliance}</span>
           </div>
-          <span className="body-sm text-on-surface-variant" style={{ display: 'block', marginTop: '8px' }}>Meta corporativa: 95.0%</span>
+          <span className="body-sm text-on-surface-variant" style={{ display: 'block', marginTop: '8px' }}>Incidencias resueltas sobre el total: {slaCompliance}</span>
         </div>
 
         <div className="kpi-card glass-panel" style={{ background: 'var(--glass-bg)', minHeight: '120px' }}>
@@ -310,9 +316,9 @@ export default function Postventa() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-              <span className="material-symbols-outlined">rate_review</span>
-              Registrar Calificación
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={busySurvey}>
+              <span className="material-symbols-outlined">{busySurvey ? 'hourglass_top' : 'rate_review'}</span>
+              {busySurvey ? 'Registrando...' : 'Registrar Calificación'}
             </button>
           </form>
 

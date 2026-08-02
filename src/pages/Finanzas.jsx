@@ -106,8 +106,12 @@ export default function Finanzas() {
   };
 
   const addLog = async (tipo, descripcion, monto = 0) => {
-    const log = await registrarLog({ tipo, descripcion, monto });
-    setFinanceLogs((prev) => [log, ...prev]);
+    try {
+      const log = await registrarLog({ tipo, descripcion, monto });
+      setFinanceLogs((prev) => [log, ...prev]);
+    } catch (err) {
+      console.error('No se pudo registrar el movimiento:', err);
+    }
   };
 
   // Generar factura para un pedido facturable (estado Instalado)

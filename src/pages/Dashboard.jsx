@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataStatus from '../components/common/DataStatus';
 import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos } from '../lib/data';
+import { formatMoney } from '../lib/format';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -70,10 +71,16 @@ export default function Dashboard() {
 
   const kpiCards = [
     { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: tendOp ? tendOp.label : 'Estable', trendUp: tendOp ? tendOp.up : null, blobBg: 'rgba(165, 216, 255, 0.5)' },
-    { title: 'Ingresos de la Semana', value: `$${kpis.pedidosTotales ? '' : ''}${ingresoSemana.toLocaleString()}`, trend: tendIng ? tendIng.label : 'Estable', trendUp: tendIng ? tendIng.up : null, blobBg: 'rgba(131, 106, 157, 0.5)' },
-    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: 'Real-time', trendUp: null, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
+    { title: 'Ingresos de la Semana', value: formatMoney(ingresoSemana), trend: tendIng ? tendIng.label : 'Estable', trendUp: tendIng ? tendIng.up : null, blobBg: 'rgba(131, 106, 157, 0.5)' },
+    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: 'En tiempo real', trendUp: null, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
     { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Calculado', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)' },
   ];
+
+  // Estado de operaciones derivado de datos reales (no hardcodeado).
+  const pctFlota = kpis.tecnicosTotales ? Math.round((kpis.tecnicosActivos / kpis.tecnicosTotales) * 100) : 0;
+  const totalEstados = estados.reduce((s, e) => s + Number(e.value || 0), 0);
+  const pendientesEstados = estados.filter((e) => !['Completado', 'Entregado', 'Cerrado'].includes(e.estado)).reduce((s, e) => s + Number(e.value || 0), 0);
+  const pctAlmacen = totalEstados ? Math.round((pendientesEstados / totalEstados) * 100) : 0;
 
   return (
     <div>
@@ -219,7 +226,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="body-sm text-on-surface" style={{ fontWeight: '700' }}>Flota Activa</p>
-                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>92% Operativa</p>
+                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>{pctFlota}% Operativa</p>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>chevron_right</span>
@@ -231,7 +238,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="body-sm text-on-surface" style={{ fontWeight: '700' }}>Almacén</p>
-                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>Capacidad al 78%</p>
+                    <p className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>Pedidos en curso {pctAlmacen}%</p>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>chevron_right</span>
@@ -243,7 +250,7 @@ export default function Dashboard() {
           <div className="glass-panel" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 className="headline-md text-on-surface">Alertas Recientes</h3>
-              <a href="/postventa" className="body-sm text-primary" style={{ textDecoration: 'none' }}>Ver Todo</a>
+              <a href="/postventa" className="body-sm text-primary" style={{ textDecoration: 'none', cursor: 'pointer' }} onClick={(e) => { e.preventDefault(); navigate('/postventa'); }}>Ver Todo</a>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
               {filteredAlerts.length > 0 ? (

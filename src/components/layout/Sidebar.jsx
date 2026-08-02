@@ -1,11 +1,12 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { modulesFor, ROL_LABELS } from '../../lib/roles';
 import { useState, useEffect } from 'react';
 
 export default function Sidebar() {
-  const { profile, rol, signOut } = useAuth();
-  const menuItems = modulesFor(rol);
+  const { rol, signOut } = useAuth();
+  const navigate = useNavigate();
+  const navItems = modulesFor(rol);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -15,20 +16,6 @@ export default function Sidebar() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const displayName = profile?.nombre || profile?.email || 'Usuario';
-  const roleLabel = ROL_LABELS[rol] || rol;
-
-  const navItems = [
-    { to: '/', icon: 'dashboard', label: 'Dashboard' },
-    { to: '/pedidos', icon: 'shopping_cart', label: 'Pedidos' },
-    { to: '/operaciones', icon: 'settings_suggest', label: 'Operaciones' },
-    { to: '/instalacion', icon: 'view_stream', label: 'Instalación' },
-    { to: '/finanzas', icon: 'payments', label: 'Finanzas' },
-    { to: '/postventa', icon: 'verified', label: 'Postventa' },
-    { to: '/reportes', icon: 'analytics', label: 'Reportes' },
-    { to: '/usuarios', icon: 'group', label: 'Usuarios' },
-  ];
 
   return (
     <aside className={`sidebar glass-panel ${isMobile ? 'mobile-hidden' : ''} ${!isExpanded && !isMobile ? 'collapsed' : ''}`}>
@@ -43,6 +30,7 @@ export default function Sidebar() {
         <button
           className="sidebar-new-request"
           aria-label="Nueva solicitud"
+          onClick={() => navigate('/pedidos')}
         >
           <span className="material-symbols-outlined text-lg">add</span>
           <span className="btn-text">Nueva solicitud</span>
@@ -69,10 +57,6 @@ export default function Sidebar() {
           <NavLink to="/perfil" className="sidebar-link">
             <span className="material-symbols-outlined">person</span>
             <span className="nav-label body-md">Perfil</span>
-          </NavLink>
-          <NavLink to="/settings" className="sidebar-link">
-            <span className="material-symbols-outlined">settings</span>
-            <span className="nav-label body-md">Ajustes</span>
           </NavLink>
         </div>
         <button className="sidebar-logout btn btn-ghost" onClick={signOut}>

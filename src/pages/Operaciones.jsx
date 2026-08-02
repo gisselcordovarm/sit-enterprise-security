@@ -13,6 +13,8 @@ export default function Operaciones() {
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
   const [operMessage, setOperMessage] = useState(null);
+  const [busyReorder, setBusyReorder] = useState(null);
+  const [busyAssign, setBusyAssign] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -36,31 +38,50 @@ export default function Operaciones() {
 
   // Auto-reorder trigger
   const handleTriggerReorder = async (itemId) => {
-    const result = await reordenarEquipo(itemId);
-    setInventory((prev) =>
-      prev.map((item) =>
-        item.dbId === itemId
-          ? { ...item, stock: item.stock + 20, reorderStatus: 'Completado', lastReorderDate: new Date().toISOString().split('T')[0] }
-          : item
-      )
-    );
-    setOperMessage({ type: 'success', text: `Reabastecimiento automático gatillado. Stock incrementado a ${result.stock} uds.` });
+    if (busyReorder) return;
+    setBusyReorder(itemId);
+    setOperMessage(null);
+    try {
+      const result = await reordenarEquipo(itemId);
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.dbId === itemId
+            ? { ...item, stock: item.stock + 20, reorderStatus: 'Completado', lastReorderDate: new Date().toISOString().split('T')[0] }
+            : item
+        )
+      );
+      setOperMessage({ type: 'success', text: `Reabastecimiento automático gatillado. Stock incrementado a ${result.stock} uds.` });
+    } catch (err) {
+      console.error(err);
+      setOperMessage({ type: 'error', text: 'No se pudo gatillar el reabastecimiento. Intente de nuevo.' });
+    } finally {
+      setBusyReorder(null);
+    }
   };
 
   // Technician Assignment Algorithm
   const handleAssignTask = async (task) => {
-    const result = await asignarTecnico(task);
-    if (result.error) {
-      setOperMessage({ type: 'error', text: `No se pudo asignar ${task.id}. ${result.error}` });
-      return;
+    if (busyAssign) return;
+    setBusyAssign(task.id);
+    setOperMessage(null);
+    try {
+      const result = await asignarTecnico(task);
+      if (result.error) {
+        setOperMessage({ type: 'error', text: `No se pudo asignar ${task.id}. ${result.error}` });
+        return;
+      }
+      setPendingTasks((prev) => prev.filter((t) => t.id !== task.id));
+      setTechnicians((prev) =>
+        prev.map((t) => (t.name === result.tech ? { ...t, workload: t.workload + 1 } : t))
+      );
+      setAssignments((prev) => [result, ...prev]);
+      setOperMessage({ type: 'success', text: result.message || `Algoritmo ejecutado: ${task.id} asignado a ${result.tech}.` });
+    } catch (err) {
+      console.error(err);
+      setOperMessage({ type: 'error', text: 'No se pudo ejecutar la asignación. Intente de nuevo.' });
+    } finally {
+      setBusyAssign(null);
     }
-
-    setPendingTasks((prev) => prev.filter((t) => t.id !== task.id));
-    setTechnicians((prev) =>
-      prev.map((t) => (t.name === result.tech ? { ...t, workload: t.workload + 1 } : t))
-    );
-    setAssignments((prev) => [result, ...prev]);
-    setOperMessage({ type: 'success', text: result.message || `Algoritmo ejecutado: ${task.id} asignado a ${result.tech}.` });
   };
 
   return (
@@ -131,9 +152,10 @@ export default function Operaciones() {
                           <button
                             className="btn btn-primary"
                             style={{ padding: '4px 10px', fontSize: '11px' }}
+                            disabled={!!busyReorder}
                             onClick={() => handleTriggerReorder(item.dbId)}
                           >
-                            Reordenar +20
+                            {busyReorder === item.dbId ? 'Reponiendo...' : 'Reordenar +20'}
                           </button>
                         ) : item.autoReorder ? (
                           <span className="label-caps text-success" style={{ fontSize: '10px' }}>CONFIGURADO</span>
@@ -168,8 +190,8 @@ export default function Operaciones() {
                       <span className="body-sm text-on-surface" style={{ fontWeight: 'bold' }}>{task.service}</span>
                       <span className="body-sm text-on-surface-variant" style={{ display: 'block', fontSize: '13px' }}>Cliente: {task.client} | Zona: <strong>{task.zone}</strong></span>
                     </div>
-                    <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleAssignTask(task)}>
-                      Asignar Técnico
+                    <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} disabled={!!busyAssign} onClick={() => handleAssignTask(task)}>
+                      {busyAssign === task.id ? 'Asignando...' : 'Asignar Técnico'}
                     </button>
                   </div>
                 ))}

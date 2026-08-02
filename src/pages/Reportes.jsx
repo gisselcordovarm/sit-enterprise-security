@@ -98,13 +98,14 @@ export default function Reportes() {
     }
   }
 
-  const wrapExport = (key, fn, okMsg) => async () => {
+  const wrapExport = (key, fn, okMsg) => async (...args) => {
     if (exportando) return
     setExportando(key)
     try {
-      fn()
+      fn(...args)
       setNota(okMsg)
-    } catch {
+    } catch (err) {
+      console.error(err)
       setNota('No se pudo generar el archivo. Verificá la conexión.')
     } finally {
       setExportando('')
