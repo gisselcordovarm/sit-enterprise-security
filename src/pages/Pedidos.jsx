@@ -163,7 +163,7 @@ export default function Pedidos() {
               <label>Dirección de Instalación</label>
               <input
                 type="text"
-                placeholder="Ej. Av. Corrientes 3481, CABA"
+                placeholder="Ej. Av. Francisco de Miranda, Chacao"
                 className="form-input"
                 value={formData.direccion}
                 onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}

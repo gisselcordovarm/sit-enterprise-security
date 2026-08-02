@@ -64,7 +64,7 @@ const demoAssignments = [
 ]
 
 const demoInstalaciones = [
-  { id: 'INST-9001', taskId: 'TSK-7844', client: 'Lucas Peralta', address: 'Av. Corrientes 3481, CABA', service: 'Instalación Cámaras Residenciales', components: '3x Cámaras Domo IP, 1x NVR 8 Canales', estado: 'Programada' },
+  { id: 'INST-9001', taskId: 'TSK-7844', client: 'Lucas Peralta', address: 'Av. Francisco de Miranda, Chacao, Caracas', service: 'Instalación Cámaras Residenciales', components: '3x Cámaras Domo IP, 1x NVR 8 Canales', estado: 'Programada' },
 ]
 
 const demoFacturas = [

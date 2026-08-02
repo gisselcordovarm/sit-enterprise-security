@@ -3,7 +3,8 @@ import { useAuth } from '../context/authContext'
 import { ROL_LABELS } from '../lib/roles'
 import { checkPasswordStrength } from '../lib/roles'
 import { formatDate } from '../lib/data'
-import { formatVzPhone, normalizeVzPhone } from '../lib/format'
+import { normalizeVzPhone } from '../lib/format'
+import PhoneVe from '../components/common/PhoneVe'
 
 // Reduce cualquier imagen a un dataURL pequeño (256px) para guardarla en el perfil.
 function readAsDataUrl(file) {
@@ -187,14 +188,7 @@ export default function Perfil() {
               </div>
               <div className="form-group">
                 <label>Teléfono (Venezuela +58)</label>
-                <input
-                  className="form-input"
-                  value={telefono ? formatVzPhone(telefono) : ''}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  placeholder="+58 412 123-4567"
-                  inputMode="tel"
-                  maxLength={16}
-                />
+                <PhoneVe value={telefono} onChange={setTelefono} />
                 <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: 'var(--on-surface-variant)' }}>Formato venezolano: +58 código de área + 7 dígitos.</span>
               </div>
             </div>
