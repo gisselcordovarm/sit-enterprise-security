@@ -39,12 +39,11 @@ export default function Finanzas() {
 
   // PDF Generator using jsPDF
   const generatePDF = (inv) => {
-    try {
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
       // Header Brand
       doc.setFillColor(11, 19, 38);
@@ -100,9 +99,6 @@ export default function Finanzas() {
       doc.text(formatMoney(inv.total), 150, 155);
 
       doc.save(`Factura-${inv.id}-${inv.cliente.replace(/\s+/g, '-')}.pdf`);
-    } catch (error) {
-      console.error('Error al generar PDF:', error);
-    }
   };
 
   const addLog = async (tipo, descripcion, monto = 0) => {
@@ -116,7 +112,7 @@ export default function Finanzas() {
 
   // Generar factura para un pedido facturable (estado Instalado)
   const handleGenerateInvoice = async (facturable) => {
-    if (generatingId) return;
+    if (generatingId !== null) return;
     setGeneratingId(facturable.id_pedido);
     setEmailAlert(null);
     try {
@@ -138,23 +134,30 @@ export default function Finanzas() {
 
   // Exportar PDF de una factura existente
   const handleExportPDF = async (inv) => {
-    if (generatingId) return;
+    if (generatingId !== null) return;
     setGeneratingId(inv.id);
+    setEmailAlert(null);
     try {
       generatePDF(inv);
       await addLog('Ajuste', `Exportación PDF Factura ${inv.id}`, 0);
     } catch (err) {
       console.error('Error al exportar PDF:', err);
+      setEmailAlert({ type: 'error', msg: `No se pudo exportar el PDF de la factura ${inv.id}.` });
     } finally {
       setGeneratingId(null);
     }
   };
 
   // Simulate Sending Invoice via Email
-  const simulateSendEmail = (inv) => {
+  const simulateSendEmail = async (inv) => {
     if (isSendingEmail) return;
+    if (!inv.rif) {
+      setEmailAlert({ type: 'error', msg: `La factura ${inv.id} no tiene RIF registrado. No se puede enviar.` });
+      return;
+    }
     setIsSendingEmail(true);
     setEmailAlert(null);
+    await addLog('Pago', `Envío de factura ${inv.id} por email a ${inv.cliente}`, 0);
     setTimeout(() => {
       setIsSendingEmail(false);
       setEmailAlert({
@@ -180,7 +183,7 @@ export default function Finanzas() {
           <div className="alert-content">
             <p className="body-sm text-on-surface">{emailAlert.msg}</p>
           </div>
-          <button className="icon-btn" onClick={() => setEmailAlert(null)} style={{ marginLeft: 'auto' }}>
+          <button className="icon-btn" aria-label="Cerrar aviso" onClick={() => setEmailAlert(null)} style={{ marginLeft: 'auto' }}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>

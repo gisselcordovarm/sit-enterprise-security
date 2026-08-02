@@ -147,7 +147,7 @@ export default function Pedidos() {
             </span>
             <span className="body-md text-on-surface">{formAlert.msg}</span>
           </div>
-          <button className="icon-btn" onClick={() => setFormAlert(null)}>
+          <button className="icon-btn" aria-label="Cerrar aviso" onClick={() => setFormAlert(null)}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -270,7 +270,7 @@ export default function Pedidos() {
                     value={linea.cantidad}
                     onChange={(e) => updateLinea(index, 'cantidad', Math.max(1, Number(e.target.value)))}
                   />
-                  <button type="button" className="icon-btn" onClick={() => removeLinea(index)}>
+                  <button type="button" className="icon-btn" aria-label="Eliminar línea" onClick={() => removeLinea(index)}>
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                   </button>
                 </div>

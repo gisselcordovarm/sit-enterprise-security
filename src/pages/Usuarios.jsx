@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import DataStatus from '../components/common/DataStatus'
 import { fetchProfiles, updateProfileRole } from '../lib/data'
 import { ROL_LABELS } from '../lib/roles'
+import { useAuth } from '../context/authContext'
 
 export default function Usuarios() {
+  const { profile } = useAuth()
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [liveError, setLiveError] = useState(null)
   const [savingId, setSavingId] = useState(null)
-  const [notice, setNotice] = useState('')
+  const [msg, setMsg] = useState('')
+  const [msgError, setMsgError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -20,14 +23,24 @@ export default function Usuarios() {
   }, [])
 
   const changeRole = async (id, rol) => {
+    if (savingId) return
+    // Evitar que el admin se quite su propio acceso y quede bloqueado sin otro admin.
+    if (id === profile?.id) {
+      setMsg('')
+      setMsgError('No podés cambiar tu propio rol. Además debe haber al menos otro administrador.')
+      return
+    }
+    if (!window.confirm(`¿Deseás cambiar el rol de este usuario a "${ROL_LABELS[rol] || rol}"?`)) return
     setSavingId(id)
-    setNotice('')
+    setMsg('')
+    setMsgError('')
     try {
       await updateProfileRole(id, rol)
       setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, rol } : p)))
-      setNotice('Rol actualizado correctamente.')
-    } catch {
-      setNotice('No se pudo actualizar el rol.')
+      setMsg('Rol actualizado correctamente.')
+    } catch (err) {
+      console.error(err)
+      setMsgError('No se pudo actualizar el rol. Intente de nuevo.')
     } finally {
       setSavingId(null)
     }
@@ -42,9 +55,14 @@ export default function Usuarios() {
 
       <DataStatus loading={loading} liveError={liveError} />
 
-      {notice && (
+      {msg && (
         <div className="m3-banner" style={{ background: 'var(--tint-success)', borderColor: 'rgba(14, 159, 110, 0.3)' }}>
-          <span className="label-caps text-success">{notice}</span>
+          <span className="label-caps text-success">{msg}</span>
+        </div>
+      )}
+      {msgError && (
+        <div className="m3-banner" style={{ background: 'var(--error-container, rgba(179, 38, 30, 0.12))', borderColor: 'rgba(179, 38, 30, 0.3)' }}>
+          <span className="label-caps" style={{ color: 'var(--error)' }}>{msgError}</span>
         </div>
       )}
 
@@ -84,8 +102,8 @@ export default function Usuarios() {
                     <select
                       className="form-select"
                       value={p.rol}
-                      disabled={savingId === p.id}
-                      style={{ padding: '6px 10px', fontSize: '13px' }}
+                      disabled={savingId === p.id || p.id === profile?.id}
+                      style={{ padding: '6px 10px', fontSize: '13px', cursor: p.id === profile?.id ? 'not-allowed' : 'default' }}
                       onChange={(e) => changeRole(p.id, e.target.value)}
                     >
                       <option value="admin">{ROL_LABELS.admin}</option>

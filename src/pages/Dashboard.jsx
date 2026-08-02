@@ -36,6 +36,14 @@ export default function Dashboard() {
     return () => { active = false; };
   }, []);
 
+  // Cerrar el modal de alerta con la tecla Escape y manejar el foco.
+  useEffect(() => {
+    if (!selectedAlert) return;
+    const onKey = (e) => { if (e.key === 'Escape') setSelectedAlert(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedAlert]);
+
   const filteredAlerts = alertFilter === 'ALL'
     ? alerts
     : alerts.filter((alert) => alert.type === alertFilter.toLowerCase());
@@ -295,16 +303,16 @@ export default function Dashboard() {
 
       {/* Modal de la alerta */}
       {selectedAlert && (
-        <div className="modal-overlay" onClick={() => setSelectedAlert(null)}>
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="alert-modal-title" onClick={() => setSelectedAlert(null)}>
           <div className="modal-content glass-panel" style={{ background: 'var(--glass-bg-strong)' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span className={`material-symbols-outlined`} style={{ color: selectedAlert.type === 'error' ? 'var(--error)' : selectedAlert.type === 'warning' ? 'var(--secondary)' : selectedAlert.type === 'success' ? 'var(--success)' : 'var(--primary)' }}>
                   {selectedAlert.type === 'error' ? 'error' : selectedAlert.type === 'warning' ? 'warning' : selectedAlert.type === 'success' ? 'check_circle' : 'info'}
                 </span>
-                <h3 className="headline-md text-on-surface">{selectedAlert.title}</h3>
+                <h3 id="alert-modal-title" className="headline-md text-on-surface">{selectedAlert.title}</h3>
               </div>
-              <button className="icon-btn" onClick={() => setSelectedAlert(null)}>
+              <button className="icon-btn" aria-label="Cerrar alerta" onClick={() => setSelectedAlert(null)}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>

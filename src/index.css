@@ -5,6 +5,7 @@
   /* Color Variables - Aetheric Flux Light */
   --bg-color: #f8f9ff;
   --primary: #4e47cf;
+  --on-primary: #ffffff;
   --primary-container: #6862e9;
   --secondary: #2e6385;
   --secondary-container: #a5d8ff;
@@ -771,12 +772,12 @@ body {
 
 .btn-primary {
   background: var(--primary-container);
-  color: var(--on-primary, #fff);
+  color: var(--on-primary);
 }
 
 .btn-primary:hover {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   box-shadow: 0 0 20px rgba(104, 98, 233, 0.4);
 }
 

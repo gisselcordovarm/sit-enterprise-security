@@ -46,9 +46,6 @@ export default function Login() {
     const passCheck = validatePassword(password)
     if (!passCheck.ok) { setPassError(passCheck.message); return }
 
-    const st = checkPasswordStrength(password)
-    if (!st.allPass) { setPassError('La contraseña no cumple todas las reglas de seguridad.'); return }
-
     setSubmitting(true)
     const err = await signIn(email, password)
     setSubmitting(false)

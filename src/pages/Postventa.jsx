@@ -149,7 +149,7 @@ export default function Postventa() {
           <div className="alert-content">
             <p className="body-sm text-on-surface">{alertMsg.text}</p>
           </div>
-          <button className="icon-btn" onClick={() => setAlertMsg(null)} style={{ marginLeft: 'auto' }}>
+          <button className="icon-btn" aria-label="Cerrar aviso" onClick={() => setAlertMsg(null)} style={{ marginLeft: 'auto' }}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>

@@ -37,6 +37,7 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     let active = true
+    let subscription = null
 
     async function bootstrap() {
       if (DEMO_MODE || !supabase) {
@@ -53,23 +54,24 @@ export default function AuthProvider({ children }) {
         setState({ user: null, profile: null, loading: false })
       }
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(async (_event, sessionData) => {
         if (!active) return
-        if (session?.user) {
-          const prof = await resolveProfile(session.user.id, session.user.email)
-          setState({ user: session.user, profile: prof, loading: false })
+        if (sessionData?.user) {
+          const prof = await resolveProfile(sessionData.user.id, sessionData.user.email)
+          setState({ user: sessionData.user, profile: prof, loading: false })
         } else {
           setState({ user: null, profile: null, loading: false })
         }
       })
-
-      return () => {
-        active = false
-        subscription?.unsubscribe()
-      }
+      subscription = sub
     }
 
     bootstrap()
+
+    return () => {
+      active = false
+      subscription?.unsubscribe()
+    }
   }, [])
 
   const signIn = useCallback(async (email, password) => {

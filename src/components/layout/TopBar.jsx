@@ -22,6 +22,7 @@ export default function TopBar({ onToggleMobileMenu }) {
   const [busy, setBusy] = useState(false);
   const boxRef = useRef(null);
   const timer = useRef(null);
+  const requestedRef = useRef(''); // descarta responses de consultas fuera de orden
 
   useEffect(() => {
     const click = (e) => {
@@ -40,7 +41,9 @@ export default function TopBar({ onToggleMobileMenu }) {
     }
     timer.current = setTimeout(async () => {
       setBusy(true);
+      requestedRef.current = q;
       const data = await buscarGlobal(q);
+      if (requestedRef.current !== q) return; // llegó una respuesta más nueva
       setResults(data);
       setOpen(true);
       setBusy(false);
@@ -74,6 +77,7 @@ export default function TopBar({ onToggleMobileMenu }) {
           <input
             type="text"
             placeholder="Buscar..."
+            aria-label="Buscar en el sistema"
             className="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

@@ -35,14 +35,14 @@ export default function DashboardLayout() {
     <div className="dashboard-layout">
       {/* Mobile Header */}
       <div className="mobile-header glass-panel" style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)' }}>
-        <button className="icon-btn" onClick={toggleMobileMenu}>
+        <button className="icon-btn" onClick={toggleMobileMenu} aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={mobileMenuOpen}>
           <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="material-symbols-outlined text-primary" style={{ fontSize: '24px' }}>security</span>
           <span className="headline-md text-on-surface" style={{ fontSize: '16px', fontWeight: 'bold' }}>SIT Security</span>
         </div>
-        <button className="icon-btn" style={{ position: 'relative' }}>
+        <button className="icon-btn" style={{ position: 'relative' }} aria-label="Notificaciones">
           <span className="material-symbols-outlined">notifications</span>
           <span className="notification-dot"></span>
         </button>

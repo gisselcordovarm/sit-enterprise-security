@@ -388,26 +388,40 @@ LIMIT 10;
 
 -- =============================================================================
 -- 5. SEGURIDAD (RLS) Y PERMISOS
--- Nota: políticas permisivas para el despliegue de prueba (anon + authenticated).
--- Para producción, reemplazar por políticas basadas en roles (auth.uid()).
+-- El acceso a los datos se restringe a usuarios autenticados (`authenticated`;
+-- su sesión se gestiona con Supabase Auth). La clave pública `anon` NO tiene
+-- permisos sobre las tablas de negocio, con lo que se cierra la escalación total
+-- que permitían las políticas genéricas "allow_all_*" anteriores.
+-- `profiles` se gestiona con políticas estrictas a partir de auth_setup.sql.
 -- =============================================================================
 DO $$
 DECLARE t text;
 BEGIN
-  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'pg_%'
+  -- Asegura que no queden políticas públicas heredadas ("allow_all_*").
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'profiles'
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
     EXECUTE format('DROP POLICY IF EXISTS "allow_all_anon_%I" ON %I;', t, t);
-    EXECUTE format('CREATE POLICY "allow_all_anon_%I" ON %I FOR ALL TO anon USING (true) WITH CHECK (true);', t, t);
     EXECUTE format('DROP POLICY IF EXISTS "allow_all_auth_%I" ON %I;', t, t);
-    EXECUTE format('CREATE POLICY "allow_all_auth_%I" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true);', t, t);
+  END LOOP;
+
+  -- Tablas de negocio: lectura + escritura para usuarios autenticados.
+  -- (El control por rol se ejerce en la capa de aplicación vía `RequireRole`.)
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'profiles'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "business_all_auth_%I" ON %I;', t, t);
+    EXECUTE format('CREATE POLICY "business_all_auth_%I" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true);', t, t);
   END LOOP;
 END $$;
 
+-- Las vistas de lectura se conceden a `anon` y `authenticated` (datos agregados).
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 GRANT SELECT ON v_dashboard_kpis, v_metricas_semanales, v_facturables, v_alertas TO anon, authenticated;
+
+-- `anon` NO recibe permisos sobre las tablas de negocio.
+GRANT SELECT ON public.profiles TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 
 -- =============================================================================
 -- 6. SEED / DATOS DE PRUEBA

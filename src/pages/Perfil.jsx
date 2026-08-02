@@ -259,13 +259,14 @@ export default function Perfil() {
             {nuevo && (
               <div className="auth-strength">
                 <div className="auth-strength-track">
+                  {/* Colores progresivos por segmento activo (i), no por el puntaje global. */}
                   {[0, 1, 2, 3].map((i) => (
                     <span
                       key={i}
                       className="auth-strength-seg"
                       style={{
                         background: i < strength.score
-                          ? ['', 'var(--error)', 'var(--secondary)', 'var(--success)'][strength.score]
+                          ? ['', 'var(--error)', 'var(--secondary)', 'var(--success)'][i]
                           : 'var(--surface-container-highest)',
                       }}
                     />

@@ -102,7 +102,7 @@ export default function Operaciones() {
           <div className="alert-content">
             <p className="body-sm text-on-surface">{operMessage.text}</p>
           </div>
-          <button className="icon-btn" onClick={() => setOperMessage(null)} style={{ marginLeft: 'auto' }}>
+          <button className="icon-btn" aria-label="Cerrar aviso" onClick={() => setOperMessage(null)} style={{ marginLeft: 'auto' }}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -166,6 +166,9 @@ export default function Operaciones() {
                     </tr>
                   );
                 })}
+                {inventory.length === 0 && (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--on-surface-variant)', padding: '24px' }}>Sin componentes en el inventario.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -214,6 +217,9 @@ export default function Operaciones() {
                   </div>
                 </div>
               ))}
+              {technicians.length === 0 && (
+                <p className="body-sm text-on-surface-variant" style={{ padding: '12px', width: '100%', textAlign: 'center' }}>Sin técnicos registrados.</p>
+              )}
             </div>
           </div>
         </section>
@@ -253,6 +259,9 @@ export default function Operaciones() {
                   </td>
                 </tr>
               ))}
+              {assignments.length === 0 && (
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--on-surface-variant)', padding: '24px' }}>No hay asignaciones en ejecución.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
