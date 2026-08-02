@@ -367,7 +367,7 @@ SELECT 'I' || id_equipo::text, 'warning', 'Inventario Crítico',
 FROM inventario WHERE stock_disponible < umbral_minimo
 UNION ALL
 SELECT 'P' || id_pedido::text, 'success', 'Autenticación de Pago',
-  'Pago aprobado para Pedido #' || id_pedido::text || ' por $' || monto_total::text || ' ARS.',
+  'Pago aprobado para Pedido #' || id_pedido::text || ' por $' || monto_total::text || ' USD.',
   fecha_pedido,
   'Transacción validada. flag_aprobado = true.'
 FROM pedidos WHERE flag_aprobado AND pago_status = 'Aprobado'
@@ -432,12 +432,12 @@ INSERT INTO clientes (nombre_cliente, telefono, direccion, zona_geografica, dato
 ON CONFLICT DO NOTHING;
 
 INSERT INTO inventario (codigo_equipo, descripcion_equipo, stock_disponible, umbral_minimo, auto_reorden, precio) VALUES
-  ('INV-101', 'Cámara IP Domo 4K', 15, 15, true, 85000),
-  ('INV-102', 'Sensor PIR Movimiento', 5, 10, true, 12000),
-  ('INV-103', 'Panel Alarma Híbrido', 10, 5, false, 210000),
-  ('INV-104', 'Cable Coaxial RG6 (Rollo)', 25, 20, true, 18000),
-  ('INV-105', 'Batería Respaldo 12V', 2, 8, true, 30000),
-  ('INV-106', 'Controlador Acceso RFID', 6, 3, false, 145000)
+  ('INV-101', 'Cámara IP Domo 4K', 15, 15, true, 120),
+  ('INV-102', 'Sensor PIR Movimiento', 5, 10, true, 35),
+  ('INV-103', 'Panel Alarma Híbrido', 10, 5, false, 220),
+  ('INV-104', 'Cable Coaxial RG6 (Rollo)', 25, 20, true, 18),
+  ('INV-105', 'Batería Respaldo 12V', 2, 8, true, 60),
+  ('INV-106', 'Controlador Acceso RFID', 6, 3, false, 280)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tecnicos (nombre_tecnico, especialidad, zona_geografica, disponibilidad, carga_trabajo) VALUES
@@ -453,11 +453,11 @@ ON CONFLICT DO NOTHING;
 -- de la demo: SIT-7844 (Lucas), SIT-7842 (Consorcio), SIT-7840 (Marcos), SIT-7839 (Clínica), SIT-7848 (YPF)
 INSERT INTO pedidos (id_pedido, id_cliente, cliente_nombre, origen, tipo_servicio, zona_geografica, cobertura_zona, fecha_pedido, monto_total, factibilidad_ok, pago_status, estado)
 OVERRIDING SYSTEM VALUE VALUES
-  (7844, 1, 'Lucas Peralta', 'Web', 'Cámaras Residenciales', 'Norte', true, CURRENT_DATE - 1, 145000, true, 'Aprobado', 'Instalado'),
-  (7842, 2, 'Consorcio Las Heras', 'Call Center', 'Monitoreo 24/7', 'Norte', false, CURRENT_DATE - 2, 420000, false, 'Aprobado', 'Rechazado'),
-  (7840, 3, 'Marcos Silva', 'Call Center', 'Control de Acceso Rfid', 'Este', true, CURRENT_DATE - 3, 85000, true, 'Rechazado', 'Pendiente'),
-  (7839, 4, 'Clínica del Parque', 'Web', 'Alarma de Incendios + CCT', 'Sur', true, CURRENT_DATE - 4, 1200000, true, 'Aprobado', 'Instalado'),
-  (7848, 7, 'Estación YPF', 'Call Center', 'Cámaras IP Corporativas', 'Norte', true, CURRENT_DATE - 2, 680000, true, 'Aprobado', 'Instalado');
+(7844, 1, 'Lucas Peralta', 'Web', 'Cámaras Residenciales', 'Norte', true, CURRENT_DATE - 1, 350, true, 'Aprobado', 'Instalado'),
+  (7842, 2, 'Consorcio Las Heras', 'Call Center', 'Monitoreo 24/7', 'Norte', false, CURRENT_DATE - 2, 1200, false, 'Aprobado', 'Rechazado'),
+  (7840, 3, 'Marcos Silva', 'Call Center', 'Control de Acceso Rfid', 'Este', true, CURRENT_DATE - 3, 850, true, 'Rechazado', 'Pendiente'),
+  (7839, 4, 'Clínica del Parque', 'Web', 'Alarma de Incendios + CCT', 'Sur', true, CURRENT_DATE - 4, 6800, true, 'Aprobado', 'Instalado'),
+  (7848, 7, 'Estación YPF', 'Call Center', 'Cámaras IP Corporativas', 'Norte', true, CURRENT_DATE - 2, 9000, true, 'Aprobado', 'Instalado');
 
 -- Motivos de rechazo explícitos (documentación: notificacion_rechazo)
 UPDATE pedidos SET motivo_factibilidad = 'Sin cobertura de fibra en coordenadas indicadas.' WHERE id_pedido = 7842;
@@ -487,16 +487,16 @@ INSERT INTO instalaciones (id_pedido, id_tecnico, fecha_programada, estado, repo
   (7848, 3, CURRENT_DATE - 1, 'Completada', true, '4x Cámaras IP Bullet, 1x NVR 16 Canales', 'Despliegue perimetral completado. Grabación 24/7 activa.', now() - interval '1 day');
 
 INSERT INTO facturas (id_pedido, id_cliente, fecha_emision, monto_total, cuit, estado_pago, items) VALUES
-  (7844, 1, CURRENT_DATE - 1, 145000, '20-34981723-9', 'Pagado',
+  (7844, 1, CURRENT_DATE - 1, 350, 'V-200000233', 'Pagado',
    '[{"desc": "Instalación Cámaras Residenciales"}, {"desc": "Configuración de Red"}]'),
-  (7839, 4, CURRENT_DATE - 3, 1200000, '30-58471203-1', 'Pendiente',
+  (7839, 4, CURRENT_DATE - 3, 6800, 'J-305812623', 'Pendiente',
    '[{"desc": "Alarma de Incendios + CCT"}, {"desc": "Servicio Monitoreo Anual"}]');
 
 INSERT INTO logs_financieros (tipo, descripcion, monto, fecha, status) VALUES
-  ('Ingreso', 'Cobro de Pedido #7844 - Lucas Peralta', 145000, '2026-06-11 15:45', 'Verificado'),
-  ('Egreso', 'Pago Proveedor Cámaras S.A. (Compra Stock)', -85000, '2026-06-10 11:20', 'Verificado'),
-  ('Ingreso', 'Cobro de Pedido #7839 - Clínica del Parque', 1200000, '2026-06-08 09:15', 'Verificado'),
-  ('Ajuste', 'Nota de Crédito para Pedido #7840 (Error pago)', -85000, '2026-06-09 17:00', 'Pendiente');
+  ('Ingreso', 'Cobro de Pedido #7844 - Lucas Peralta', 350, '2026-06-11 15:45', 'Verificado'),
+  ('Egreso', 'Pago Proveedor Cámaras S.A. (Compra Stock)', -4200, '2026-06-10 11:20', 'Verificado'),
+  ('Ingreso', 'Cobro de Pedido #7839 - Clínica del Parque', 6800, '2026-06-08 09:15', 'Verificado'),
+  ('Ajuste', 'Nota de Crédito para Pedido #7840 (Error pago)', -850, '2026-06-09 17:00', 'Pendiente');
 
 INSERT INTO incidencias (id_pedido, cliente_nombre, tipo, descripcion, fecha, estado, resolucion) VALUES
   (7844, 'Lucas Peralta', 'Desconexión de Canal', 'Canal 3 sin señal por 20 min.', now() - interval '1 day', 'Cerrado', 'Resuelto por control remoto (Reinicio IP)'),

@@ -29,10 +29,10 @@ export function formatDate(dateStr) {
 // =============================================================================
 
 const demoPedidos = [
-  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 145000, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', zona: 'Caracas, Libertador, Distrito Capital' },
-  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 420000, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', zona: 'Maracaibo, Maracaibo, Zulia' },
-  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 85000, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, zona: 'Valencia, Valencia, Carabobo' },
-  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 1200000, fecha: '2026-06-08', error_pago: null, motivoFeat: null, zona: 'Maracay, Girardot, Aragua' },
+  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 350, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', zona: 'Caracas, Libertador, Distrito Capital' },
+  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 1200, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', zona: 'Maracaibo, Maracaibo, Zulia' },
+  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 850, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, zona: 'Valencia, Valencia, Carabobo' },
+  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 6800, fecha: '2026-06-08', error_pago: null, motivoFeat: null, zona: 'Maracay, Girardot, Aragua' },
 ]
 
 const demoInventario = [
@@ -67,15 +67,15 @@ const demoInstalaciones = [
 ]
 
 const demoFacturas = [
-  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 145000, cuit: '20-34981723-9', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'] },
-  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 1200000, cuit: '30-58471203-1', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'] },
+  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, cuit: 'V-193478233', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'] },
+  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, cuit: 'J-305847120', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'] },
 ]
 
 const demoLogs = [
-  { id: 'LOG-4501', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7844 - Lucas Peralta', monto: 145000, fecha: '2026-06-11 15:45', status: 'Verificado' },
-  { id: 'LOG-4502', tipo: 'Egreso', descripcion: 'Pago Proveedor Cámaras S.A. (Compra Stock)', monto: -85000, fecha: '2026-06-10 11:20', status: 'Verificado' },
-  { id: 'LOG-4503', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7839 - Clínica del Parque', monto: 1200000, fecha: '2026-06-08 09:15', status: 'Verificado' },
-  { id: 'LOG-4504', tipo: 'Ajuste', descripcion: 'Nota de Crédito para Pedido #7840 (Error pago)', monto: -85000, status: 'Pendiente', fecha: '2026-06-09 17:00' },
+  { id: 'LOG-4501', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7844 - Lucas Peralta', monto: 350, fecha: '2026-06-11 15:45', status: 'Verificado' },
+  { id: 'LOG-4502', tipo: 'Egreso', descripcion: 'Pago Proveedor Cámaras S.A. (Compra Stock)', monto: -4200, fecha: '2026-06-10 11:20', status: 'Verificado' },
+  { id: 'LOG-4503', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7839 - Clínica del Parque', monto: 6800, fecha: '2026-06-08 09:15', status: 'Verificado' },
+  { id: 'LOG-4504', tipo: 'Ajuste', descripcion: 'Nota de Crédito para Pedido #7840 (Error pago)', monto: -850, status: 'Pendiente', fecha: '2026-06-09 17:00' },
 ]
 
 const demoIncidencias = [
@@ -95,19 +95,19 @@ const demoEncuestas = [
 const demoKpis = { pedidosTotales: 1248, incidenciasAbiertas: 14, tecnicosActivos: 42, tecnicosTotales: 48, nps: 74 }
 
 const demoSemana = [
-  { dia: null, servicios: 80, ventas: 45 },
-  { dia: null, servicios: 95, ventas: 60 },
-  { dia: null, servicios: 110, ventas: 85 },
-  { dia: null, servicios: 75, ventas: 90 },
-  { dia: null, servicios: 130, ventas: 120 },
-  { dia: null, servicios: 50, ventas: 80 },
-  { dia: null, servicios: 30, ventas: 40 },
+  { dia: null, servicios: 80, ventas: 450 },
+  { dia: null, servicios: 95, ventas: 800 },
+  { dia: null, servicios: 110, ventas: 1300 },
+  { dia: null, servicios: 75, ventas: 2100 },
+  { dia: null, servicios: 130, ventas: 2600 },
+  { dia: null, servicios: 50, ventas: 1500 },
+  { dia: null, servicios: 30, ventas: 900 },
 ]
 
 const demoAlertas = [
   { id: 'D1', type: 'error', title: 'Fallo de Feat. Técnica', description: 'Pedido #7842: Error de factibilidad técnica en Zona Norte. No hay cobertura de fibra óptica disponible en las coordenadas indicadas.', time: 'Hace 5 min', details: 'Dirección: Av. San Martín 1540. Solicitud cancelada provisionalmente hasta confirmación de antena microondas.' },
   { id: 'D2', type: 'warning', title: 'Inventario Crítico', description: 'Sensores de movimiento infrarrojos (Ref: PIR-400) por debajo del umbral de seguridad (5 unidades restantes).', time: 'Hace 15 min', details: 'Inventario actual: 3 unidades. Umbral configurado: 10 unidades. Se sugiere reabastecimiento automático.' },
-  { id: 'D3', type: 'success', title: 'Autenticación de Pago', description: 'Pago aprobado para Pedido #7844 (Web) por $145,000 ARS. Estado: flag_aprobado = true.', time: 'Hace 30 min', details: 'Transacción ID: TXN-9081273. Procesador: Stripe SIT. Tarjeta terminada en 4821.' },
+  { id: 'D3', type: 'success', title: 'Autenticación de Pago', description: 'Pago aprobado para Pedido #7844 (Web) por $350,00 USD. Estado: flag_aprobado = true.', time: 'Hace 30 min', details: 'Transacción ID: TXN-9081273. Procesador: Stripe SIT. Tarjeta terminada en 4821.' },
   { id: 'D4', type: 'info', title: 'Asignación de Técnico', description: 'Técnico Ariel Ramírez asignado al servicio de instalación en Zona Oeste (Orden #9034).', time: 'Hace 1 hora', details: 'Horario programado: 14:30 hs. Tipo: Instalación Cámaras IP de Alta Seguridad.' },
   { id: 'D5', type: 'error', title: 'Error de Pago', description: 'Pago rechazado para Pedido #7840 (Call Center). Código: error_pago (Fondos Insuficientes).', time: 'Hace 2 horas', details: 'Cliente: Marcos Silva. Re-intento programado de forma manual en 24 horas.' },
 ]
@@ -552,7 +552,7 @@ export async function fetchFacturables() {
       cuit: r.datos_fiscales || '',
     }))
   }, () => [
-    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 680000, cuit: 'CUIT 30-63974344-1' },
+    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 9000, cuit: 'CUIT J-306398780' },
   ])
 }
 
