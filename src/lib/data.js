@@ -1,4 +1,5 @@
 import { supabase, DEMO_MODE } from './supabase'
+import { formatMoney } from './format'
 
 // =============================================================================
 // Utilidades de mapeo y formato
@@ -847,6 +848,43 @@ function agregarPorFecha(filas, desde, hasta) {
     })
   }
   return out
+}
+
+// =============================================================================
+// BÚSQUEDA GLOBAL (barra superior): pedidos, clientes, inventario, técnicos y facturas
+// =============================================================================
+
+export async function buscarGlobal(term) {
+  const t = String(term || '').trim().toLowerCase()
+  if (t.length < 2) return []
+  try {
+    const [pedidos, inventario, tecnicos, facturas] = await Promise.all([
+      fetchPedidos(), fetchInventario(), fetchTecnicos(), fetchFacturas(),
+    ])
+    const match = (v) => String(v || '').toLowerCase().includes(t)
+    const out = []
+
+    pedidos.forEach((p) => {
+      if (match(p.cliente) || match(p.servicio) || match(p.id) || match(p.zona)) {
+        out.push({ tipo: 'Pedido', titulo: p.cliente, sub: `${p.id} · ${p.servicio}`, href: '/pedidos' })
+      }
+    })
+    inventario.forEach((i) => {
+      if (match(i.name) || match(i.id)) out.push({ tipo: 'Inventario', titulo: i.name, sub: `${i.id} · Stock: ${i.stock}`, href: '/operaciones' })
+    })
+    tecnicos.forEach((tec) => {
+      if (match(tec.name) || match(tec.zone)) out.push({ tipo: 'Técnico', titulo: tec.name, sub: `${tec.id} · ${tec.zone}`, href: '/operaciones' })
+    })
+    facturas.forEach((f) => {
+      if (match(f.cliente) || match(f.id)) out.push({ tipo: 'Factura', titulo: f.cliente, sub: `${f.id} · ${formatMoney(f.total)}`, href: '/finanzas' })
+    })
+
+    out.sort((a, b) => a.tipo.localeCompare(b.tipo))
+    return out.slice(0, 30)
+  } catch (e) {
+    console.warn('buscarGlobal error:', e?.message || e)
+    return []
+  }
 }
 
 export { DEMO_MODE }
