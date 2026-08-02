@@ -5,17 +5,18 @@
 // =============================================================================
 
 export const CONSULTAS_REPORTES = [
-  {
+{
     id: 'reporte_semanal',
-    modulo: 'Reporte semanal de pedidos',
+    modulo: 'Reporte semanal de pedidos (por rango de fechas)',
     archivo: 'Reporte_semanal_pedidos',
-    descripcion: 'Cantidad de servicios y ventas por día durante la última semana.',
-    sql: `SELECT d.dia,
-  (SELECT count(*) FROM pedidos p WHERE p.fecha_pedido = d.dia) AS servicios,
-  (SELECT COALESCE(sum(p.monto_total),0) FROM pedidos p
-     WHERE p.fecha_pedido = d.dia AND p.flag_aprobado) AS ventas
-FROM (SELECT generate_series(CURRENT_DATE - 6, CURRENT_DATE, '1 day')::date AS dia) d
-ORDER BY d.dia;`,
+    descripcion: 'Cantidad de servicios y ventas agrupadas por fecha dentro del rango consultado.',
+    sql: `SELECT fecha_pedido AS dia,
+       count(*) AS servicios,
+       COALESCE(sum(monto_total) FILTER (WHERE flag_aprobado), 0) AS ventas
+FROM public.pedidos
+WHERE fecha_pedido BETWEEN '[fecha_desde]' AND '[fecha_hasta]'
+GROUP BY fecha_pedido
+ORDER BY fecha_pedido;`,
   },
   {
     id: 'inventario',

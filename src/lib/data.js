@@ -810,4 +810,43 @@ export async function fetchMetricasSemanales() {
   })
 }
 
+// Reporte semanal por rango de fechas (agrupado por día).
+export async function fetchReporteSemanal({ desde, hasta }) {
+  return withFallback(async () => {
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('fecha_pedido, monto_total, flag_aprobado')
+      .gte('fecha_pedido', desde)
+      .lte('fecha_pedido', hasta)
+    if (error) throw error
+    return agregarPorFecha((data || []), desde, hasta)
+  }, () => {
+    const rows = demoPedidos.filter((p) => p.fecha >= desde && p.fecha <= hasta)
+    return agregarPorFecha(rows.map((p) => ({ fecha_pedido: p.fecha, monto_total: p.total, flag_aprobado: p.flag_aprobado })), desde, hasta)
+  })
+}
+
+// Agrupa pedidos por día y arma la serie (días vacíos → 0) para el rango.
+function agregarPorFecha(filas, desde, hasta) {
+  const counts = {}
+  const sums = {}
+  ;(filas || []).forEach((r) => {
+    const d = String(r.fecha_pedido).slice(0, 10)
+    counts[d] = (counts[d] || 0) + 1
+    if (r.flag_aprobado) sums[d] = (sums[d] || 0) + Number(r.monto_total || 0)
+  })
+  const out = []
+  const cur = new Date(`${desde}T00:00:00`)
+  const end = new Date(`${hasta}T00:00:00`)
+  for (; cur <= end; cur.setDate(cur.getDate() + 1)) {
+    const localKey = [cur.getFullYear(), String(cur.getMonth() + 1).padStart(2, '0'), String(cur.getDate()).padStart(2, '0')].join('-')
+    out.push({
+      dia: cur.toLocaleDateString('es-VE'),
+      servicios: counts[localKey] || 0,
+      monto: sums[localKey] || 0,
+    })
+  }
+  return out
+}
+
 export { DEMO_MODE }

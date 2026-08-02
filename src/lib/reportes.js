@@ -103,8 +103,8 @@ export function generarPdfReporteSemanal({ filas, desde, hasta }) {
   doc.setFont('Helvetica', 'bold')
   doc.setFillColor(218, 226, 253)
   doc.rect(15, 53, 180, 9, 'F')
-  ;['Día', 'Servicios', 'Ventas', 'Monto (USD)'].forEach((h, i) => {
-    const x = 18 + i * 45
+  ;['Día', 'Servicios', 'Monto (USD)'].forEach((h, i) => {
+    const x = 18 + i * 55
     doc.setTextColor(0, 0, 0)
     doc.text(h, x, 59)
   })
@@ -122,9 +122,8 @@ export function generarPdfReporteSemanal({ filas, desde, hasta }) {
     }
     doc.setTextColor(40, 40, 40)
     doc.text(f.dia, 18, y)
-    doc.text(String(f.servicios), 63, y)
-    doc.text(String(f.pedidos), 108, y)
-    doc.text(formatMoney(f.monto), 153, y)
+    doc.text(String(f.servicios), 73, y)
+    doc.text(formatMoney(f.monto), 128, y)
     y += 8
   })
 

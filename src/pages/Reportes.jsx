@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import DataStatus from '../components/common/DataStatus'
 import {
-  fetchMetricasSemanales,
   fetchInventario,
   fetchTecnicos,
   fetchFacturas,
+  fetchReporteSemanal,
 } from '../lib/data'
 import {
   exportarCSV,
@@ -16,16 +16,23 @@ import {
 import { CONSULTAS_REPORTES, CONSULTA_METRICAS_SEMANALES } from '../lib/reportQueries'
 import { formatMoney } from '../lib/format'
 
-const hoyMenos = (dias) => new Date(Date.now() - dias * 86400000).toLocaleDateString('es-VE')
+const toIso = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+const hoyMenos = (dias) => {
+  const d = new Date(Date.now() - dias * 86400000)
+  return toIso(d)
+}
 
 export default function Reportes() {
   const [loading, setLoading] = useState(true)
   const [liveError, setLiveError] = useState(null)
+  const [consultando, setConsultando] = useState(false)
 
   const [inventario, setInventario] = useState([])
   const [tecnicos, setTecnicos] = useState([])
   const [facturas, setFacturas] = useState([])
   const [semanal, setSemanal] = useState([])
+  const [desde, setDesde] = useState(() => hoyMenos(6))
+  const [hasta, setHasta] = useState(() => hoyMenos(0))
   const [sqlAbierta, setSqlAbierta] = useState('')
   const [nota, setNota] = useState('')
 
@@ -35,20 +42,14 @@ export default function Reportes() {
       fetchInventario(),
       fetchTecnicos(),
       fetchFacturas(),
-      fetchMetricasSemanales(),
+      fetchReporteSemanal({ desde: hoyMenos(6), hasta: hoyMenos(0) }),
     ])
-      .then(([inv, tec, fac, met]) => {
+      .then(([inv, tec, fac, sem]) => {
         if (!active) return
-        const op = met.op || []
-        const ing = met.ing || []
         setInventario(inv)
         setTecnicos(tec)
         setFacturas(fac)
-        setSemanal(op.map((o, i) => ({
-          dia: o.label,
-          servicios: o.value,
-          monto: ing[i]?.value || 0,
-        })))
+        setSemanal(sem)
         setLiveError(null)
       })
       .catch(() => { if (active) setLiveError(true) })
@@ -56,8 +57,44 @@ export default function Reportes() {
     return () => { active = false }
   }, [])
 
+  const consultarSemanal = async () => {
+    if (!desde || !hasta || hasta < desde) {
+      setNota('Verifique el rango de fechas (la fecha final debe ser mayor o igual a la inicial).')
+      return
+    }
+    setConsultando(true)
+    try {
+      const data = await fetchReporteSemanal({ desde, hasta })
+      setSemanal(data)
+      setNota(`Reporte semanal consultado: ${new Date(`${desde}T00:00`).toLocaleDateString('es-VE')} → ${new Date(`${hasta}T00:00`).toLocaleDateString('es-VE')}.`)
+    } catch {
+      setNota('No se pudo consultar el rango.')
+    } finally {
+      setConsultando(false)
+    }
+  }
+
+  const exportRango = async () => {
+    if (!desde || !hasta || hasta < desde) {
+      setNota('Verifique el rango de fechas antes de generar el PDF.')
+      return
+    }
+    const data = await fetchReporteSemanal({ desde, hasta })
+    if (data.length === 0) {
+      setNota('Sin pedidos registrados en el rango seleccionado.')
+      return
+    }
+    setSemanal(data)
+    generarPdfReporteSemanal({
+      filas: data,
+      desde,
+      hasta,
+    })
+    setNota('Reporte semanal de pedidos generado en .PDF.')
+  }
+
   const exportInventario = () => {
-    exportarXLSX('Listado_inventario', ['Código', 'Componente', 'Stock', 'Mínimo', 'Auto-reorder', 'Reposición'], 
+    exportarXLSX('Listado_inventario', ['Código', 'Componente', 'Stock', 'Mínimo', 'Auto-reorder', 'Reposición'],
       inventario.map((i) => [i.id, i.name, i.stock, i.minThreshold, i.autoReorder ? 'Sí' : 'No', i.reorderStatus]))
     setNota('Listado de inventario exportado a Excel (.XLS).')
   }
@@ -66,15 +103,6 @@ export default function Reportes() {
     exportarCSV('Listado_tecnicos_disponibles', ['ID', 'Nombre', 'Zona/Estado', 'Carga de trabajo', 'Disponibilidad'],
       tecnicos.map((t) => [t.id, t.name, t.zone, t.workload, t.status === 'Activo' ? 'Disponible' : t.status]))
     setNota('Listado de técnicos disponibles exportado a .CSV.')
-  }
-
-  const exportSemanal = () => {
-    generarPdfReporteSemanal({
-      filas: semanal,
-      desde: hoyMenos(6),
-      hasta: hoyMenos(0),
-    })
-    setNota('Reporte semanal de pedidos generado en .PDF.')
   }
 
   const exportFacturaPdf = (inv) => {
@@ -111,7 +139,22 @@ export default function Reportes() {
             <h2 className="headline-md text-on-surface">1 · Reporte semanal de pedidos (.PDF)</h2>
             <span className="body-sm text-on-surface-variant">{CONSULTAS_REPORTES[0].descripcion}</span>
           </div>
-          <button className="btn btn-primary" onClick={exportSemanal}>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 'var(--stack-md)' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Desde</label>
+            <input type="date" className="form-input" value={desde} max={hasta || undefined} onChange={(e) => setDesde(e.target.value)} />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Hasta</label>
+            <input type="date" className="form-input" value={hasta} min={desde || undefined} onChange={(e) => setHasta(e.target.value)} />
+          </div>
+          <button className="btn btn-secondary" onClick={consultarSemanal} disabled={consultando}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+            {consultando ? 'Consultando...' : 'Consultar rango'}
+          </button>
+          <button className="btn btn-primary" onClick={exportRango}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>picture_as_pdf</span>
             Generar PDF
           </button>
