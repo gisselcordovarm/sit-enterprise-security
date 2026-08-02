@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS facturas (
   id_cliente          BIGINT REFERENCES clientes(id_cliente),
   fecha_emision       DATE NOT NULL DEFAULT CURRENT_DATE,
   monto_total         NUMERIC(14,2) NOT NULL DEFAULT 0,
-  cuit                VARCHAR(30),
+  rif                 VARCHAR(30),
   estado_pago         VARCHAR(30) NOT NULL DEFAULT 'Pendiente',
   factura_pdf         TEXT,
   registro_contable   TEXT,
@@ -422,13 +422,13 @@ ALTER TABLE facturas ALTER COLUMN id_factura RESTART WITH 2091;
 ALTER TABLE logs_financieros ALTER COLUMN id_log RESTART WITH 4501;
 
 INSERT INTO clientes (nombre_cliente, telefono, direccion, zona_geografica, datos_contacto, datos_fiscales) VALUES
-  ('Lucas Peralta', '+54 11 4567-8901', 'Av. Corrientes 3481, CABA', 'Norte', 'lucasperalta@mail.com', 'CUIT 20-34981723-9'),
-  ('Consorcio Las Heras', '+54 11 4987-1234', 'Av. San Martín 1540, Zona Norte', 'Norte', 'admin@lasheras.com', 'CUIT 30-71234987-5'),
-  ('Marcos Silva', '+54 11 5566-7788', 'Montevideo 1123, CABA', 'Este', 'msilva@mail.com', 'CUIT 20-27654321-8'),
-  ('Clínica del Parque', '+54 11 4811-9900', 'Lavalle 2233, CABA', 'Sur', 'recepcion@clinica.com', 'CUIT 30-58471203-1'),
-  ('Telecom S.A.', '+54 11 4300-2000', 'Perón 400, CABA', 'Sur', 'facturacion@telecom.com', 'CUIT 30-63974355-0'),
-  ('Roberto Díaz', '+54 11 3322-4455', 'Cabildo 5600, Zona Norte', 'Norte', 'rdiaz@mail.com', 'CUIT 20-30123456-7'),
-  ('Estación YPF', '+54 11 4000-8800', 'Ruta 8 Km 16, Zona Norte', 'Norte', 'operaciones@ypf.com', 'CUIT 30-63974344-1')
+  ('Lucas Peralta', '+58 412 123-4567', 'Av. Francisco de Miranda, Chacao, Caracas', 'Distrito Capital', 'lucasperalta@mail.com', 'V-19347823-3'),
+  ('Consorcio Las Heras', '+58 414 876-5432', 'Calle 72, Maracaibo, Zulia', 'Zulia', 'admin@lasheras.com', 'J-30601834-5'),
+  ('Marcos Silva', '+58 416 555-7788', 'Av. Bolívar Norte, Valencia, Carabobo', 'Carabobo', 'msilva@mail.com', 'V-27654321-8'),
+  ('Clínica del Parque', '+58 424 481-9900', 'Av. Libertador, El Rosal, Caracas', 'Distrito Capital', 'recepcion@clinica.com', 'J-30508126-1'),
+  ('Telecom S.A.', '+58 212 430-2000', 'Av. Principal La Castellana, Caracas', 'Distrito Capital', 'facturacion@telecom.com', 'J-30259483-8'),
+  ('Roberto Díaz', '+58 426 332-4455', 'Calle Las Mercedes, Maracay, Aragua', 'Aragua', 'rdiaz@mail.com', 'V-30158479-9'),
+  ('Estación YPF', '+58 414 400-8800', 'Carretera Panamericana, San Antonio, Bolívar', 'Bolívar', 'operaciones@estacion.com', 'J-30301255-2')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO inventario (codigo_equipo, descripcion_equipo, stock_disponible, umbral_minimo, auto_reorden, precio) VALUES
@@ -486,7 +486,7 @@ INSERT INTO instalaciones (id_pedido, id_tecnico, fecha_programada, estado, repo
   (7839, 2, CURRENT_DATE - 3, 'Completada', true, '2x Panel Alarma Híbrido, 2x Sensor PIR', 'Sistema integrado al CCT del edificio. Comisionado OK.', now() - interval '3 days'),
   (7848, 3, CURRENT_DATE - 1, 'Completada', true, '4x Cámaras IP Bullet, 1x NVR 16 Canales', 'Despliegue perimetral completado. Grabación 24/7 activa.', now() - interval '1 day');
 
-INSERT INTO facturas (id_pedido, id_cliente, fecha_emision, monto_total, cuit, estado_pago, items) VALUES
+INSERT INTO facturas (id_pedido, id_cliente, fecha_emision, monto_total, rif, estado_pago, items) VALUES
   (7844, 1, CURRENT_DATE - 1, 350, 'V-200000233', 'Pagado',
    '[{"desc": "Instalación Cámaras Residenciales"}, {"desc": "Configuración de Red"}]'),
   (7839, 4, CURRENT_DATE - 3, 6800, 'J-305812623', 'Pendiente',

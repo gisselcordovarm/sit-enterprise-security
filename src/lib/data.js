@@ -68,8 +68,8 @@ const demoInstalaciones = [
 ]
 
 const demoFacturas = [
-  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, cuit: 'V-193478233', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'] },
-  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, cuit: 'J-305847120', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'] },
+  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, rif: 'V-19347823-3', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'] },
+  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, rif: 'J-30581262-3', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'] },
 ]
 
 const demoLogs = [
@@ -533,7 +533,7 @@ export async function fetchFacturas() {
       orderId: `SIT-${r.id_pedido}`,
       cliente: r.clientes?.nombre_cliente || r.id_pedido,
       total: Number(r.monto_total),
-      cuit: r.cuit || '',
+      rif: r.rif || '',
       fecha: r.fecha_emision,
       estado_pago: r.estado_pago,
       items: (r.items || []).map((i) => i.desc),
@@ -550,10 +550,10 @@ export async function fetchFacturables() {
       cliente: r.cliente_nombre,
       servicio: r.tipo_servicio,
       total: Number(r.monto_total),
-      cuit: r.datos_fiscales || '',
+      rif: r.datos_fiscales || '',
     }))
   }, () => [
-    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 9000, cuit: 'J-306398780' },
+    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 9000, rif: 'J-30301255-2' },
   ])
 }
 
@@ -564,7 +564,7 @@ export async function generarFactura(pedido) {
       orderId: `SIT-${pedido.id_pedido}`,
       cliente: pedido.cliente,
       total: Number(pedido.total),
-      cuit: pedido.cuit || '',
+      rif: pedido.rif || '',
       fecha: new Date().toISOString().split('T')[0],
       items: [pedido.servicio, 'Servicios complementarios'],
     }
@@ -576,7 +576,7 @@ export async function generarFactura(pedido) {
         id_pedido: pedido.id_pedido,
         fecha_emision: new Date().toISOString().split('T')[0],
         monto_total: Number(pedido.total),
-        cuit: pedido.cuit || null,
+        rif: pedido.rif || null,
         estado_pago: 'Pendiente',
         items: [{ desc: pedido.servicio }, { desc: 'Servicios complementarios' }],
       })
@@ -587,7 +587,7 @@ export async function generarFactura(pedido) {
       orderId: `SIT-${data.id_pedido}`,
       cliente: pedido.cliente,
       total: Number(data.monto_total),
-      cuit: data.cuit || '',
+      rif: data.rif || '',
       fecha: data.fecha_emision,
       items: (data.items || []).map((i) => i.desc),
     }
@@ -598,7 +598,7 @@ export async function generarFactura(pedido) {
       orderId: `SIT-${pedido.id_pedido}`,
       cliente: pedido.cliente,
       total: Number(pedido.total),
-      cuit: pedido.cuit || '',
+      rif: pedido.rif || '',
       fecha: new Date().toISOString().split('T')[0],
       items: [pedido.servicio, 'Servicios complementarios'],
     }

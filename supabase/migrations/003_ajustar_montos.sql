@@ -12,9 +12,9 @@ UPDATE public.pedidos SET monto_total = 850   WHERE id_pedido = 7840;
 UPDATE public.pedidos SET monto_total = 6800  WHERE id_pedido = 7839;
 UPDATE public.pedidos SET monto_total = 9000  WHERE id_pedido = 7848;
 
--- 2) Facturas
-UPDATE public.facturas SET monto_total = 350, cuit = 'V-200000233' WHERE id_pedido = 7844;
-UPDATE public.facturas SET monto_total = 6800, cuit = 'V-305812623' WHERE id_pedido = 7839;
+-- 2) Facturas (RIF venezolano, formato V-/J-)
+UPDATE public.facturas SET monto_total = 350, rif = 'V-200000233' WHERE id_pedido = 7844;
+UPDATE public.facturas SET monto_total = 6800, rif = 'J-305812623' WHERE id_pedido = 7839;
 
 -- 3) Libro contable (logs_financieros)
 UPDATE public.logs_financieros SET monto = 350 WHERE descripcion LIKE '%Cobro de Pedido #7844%';

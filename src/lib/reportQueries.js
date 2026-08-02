@@ -56,7 +56,7 @@ ORDER BY id_tecnico;`,
        p.cliente_nombre,
        p.tipo_servicio,
        p.monto_total,
-       c.datos_fiscales AS cuit
+       c.datos_fiscales AS rif
 FROM public.pedidos p
 LEFT JOIN public.clientes c ON c.id_cliente = p.id_cliente
 WHERE p.estado = 'Instalado'

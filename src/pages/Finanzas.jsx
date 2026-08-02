@@ -70,7 +70,7 @@ export default function Finanzas() {
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(11);
       doc.text(`CLIENTE: ${inv.cliente.toUpperCase()}`, 20, 56);
-      doc.text(`RIF: ${inv.cuit}`, 20, 62);
+      doc.text(`RIF: ${inv.rif}`, 20, 62);
       doc.text('Condición IVA: Contribuyente Formal', 20, 68);
 
       // Items Table header
@@ -232,7 +232,7 @@ export default function Finanzas() {
                   <div>
                     <span className="badge badge-info" style={{ marginBottom: '6px' }}>{inv.id}</span>
                     <h3 className="body-md text-on-surface" style={{ fontWeight: 'bold' }}>{inv.cliente}</h3>
-                    <p className="body-sm text-on-surface-variant">Orden vinculada: {inv.orderId} | RIF: {inv.cuit}</p>
+                    <p className="body-sm text-on-surface-variant">Orden vinculada: {inv.orderId} | RIF: {inv.rif}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <span className="body-md text-success" style={{ fontWeight: 'bold', display: 'block' }}>
