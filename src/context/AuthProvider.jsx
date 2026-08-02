@@ -120,12 +120,18 @@ export default function AuthProvider({ children }) {
     return null
   }, [state.profile?.id])
 
-  // Cambia la contraseña de la sesión actual (requiere sesión activa).
-  const changePassword = useCallback(async (newPassword) => {
+  // Cambia la contraseña de la sesión actual. Exige la contraseña vigente:
+  // se re-autentica primero y recién después se actualiza la clave.
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
     if (!supabase || DEMO_MODE) return 'Cambio de contraseña desactivado en modo demostración.'
+    const { error: signError } = await supabase.auth.signInWithPassword({
+      email: state.user?.email,
+      password: currentPassword,
+    })
+    if (signError) return 'La contraseña actual es incorrecta.'
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     return error ? error.message : null
-  }, [])
+  }, [state.user?.email])
 
   const value = useMemo(
     () => ({

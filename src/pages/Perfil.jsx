@@ -86,6 +86,10 @@ export default function Perfil() {
   async function guardarPassword() {
     setPassErr('')
     setPassMsg('')
+    if (!cur) {
+      setPassErr('Ingresar la contraseña actual.')
+      return
+    }
     if (nuevo !== confirmar) {
       setPassErr('La confirmación no coincide con la nueva contraseña.')
       return
@@ -95,7 +99,7 @@ export default function Perfil() {
       return
     }
     setSavingPass(true)
-    const error = await changePassword(nuevo)
+    const error = await changePassword(cur, nuevo)
     setSavingPass(false)
     if (error) setPassErr(error)
     else {
