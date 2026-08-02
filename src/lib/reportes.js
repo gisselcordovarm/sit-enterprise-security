@@ -183,8 +183,8 @@ export function generarPdfFactura(inv) {
   doc.setFont('Helvetica', 'bold')
   doc.text(`CLIENTE: ${inv.cliente.toUpperCase()}`, 20, 56)
   doc.setFont('Helvetica', 'normal')
-  doc.text(`CUIT: ${inv.cuit}`, 20, 62)
-  doc.text('Condición IVA: Responsable Inscripto', 20, 68)
+  doc.text(`RIF: ${inv.cuit}`, 20, 62)
+  doc.text('Condición IVA: Contribuyente Formal', 20, 68)
 
   doc.setFillColor(194, 198, 216)
   doc.rect(15, 85, 180, 10, 'F')

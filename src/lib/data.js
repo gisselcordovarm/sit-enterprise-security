@@ -553,7 +553,7 @@ export async function fetchFacturables() {
       cuit: r.datos_fiscales || '',
     }))
   }, () => [
-    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 9000, cuit: 'CUIT J-306398780' },
+    { id_pedido: 7838, cliente: 'Estación YPF', servicio: 'Cámaras IP Corporativas', total: 9000, cuit: 'J-306398780' },
   ])
 }
 
