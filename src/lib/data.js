@@ -193,6 +193,9 @@ export async function crearPedido(payload) {
   if (!supabase) return crearPedidoDemo(payload)
   try {
     const status = computeOrderStatus(payload)
+    // La columna zona_geografica es VARCHAR(30) en el esquema vivo; se recorta
+    // para no provocar un error de "value too long" al persistir.
+    const zona = String([payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', ')).slice(0, 29)
 
     let idCliente = null
     const { data: existing } = await supabase
@@ -203,10 +206,7 @@ export async function crearPedido(payload) {
         .from('clientes')
         .insert({
           nombre_cliente: payload.cliente,
-          zona_geografica: [payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', '),
-          geo_estado: payload.estado || null,
-          municipio: payload.municipio || null,
-          ciudad: payload.ciudad || null,
+          zona_geografica: zona,
           direccion: payload.direccion || '',
         })
         .select('id_cliente').single()
@@ -221,10 +221,7 @@ export async function crearPedido(payload) {
         cliente_nombre: payload.cliente,
         origen: payload.origen,
         tipo_servicio: payload.servicio,
-        zona_geografica: [payload.ciudad, payload.municipio, payload.estado].filter(Boolean).join(', '),
-        geo_estado: payload.estado || null,
-        municipio: payload.municipio || null,
-        ciudad: payload.ciudad || null,
+        zona_geografica: zona,
         direccion: payload.direccion || null,
         cobertura_zona: status.factibilidad,
         monto_total: payload.total,
