@@ -42,6 +42,7 @@ export default function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={() => navigate(item.to)}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             end={item.to === '/'}
             aria-current={item.to === '/' ? 'page' : undefined}
