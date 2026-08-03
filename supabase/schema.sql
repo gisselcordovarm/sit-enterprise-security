@@ -390,10 +390,38 @@ LIMIT 10;
 -- 5. SEGURIDAD (RLS) Y PERMISOS
 -- El acceso a los datos se restringe a usuarios autenticados (`authenticated`;
 -- su sesión se gestiona con Supabase Auth). La clave pública `anon` NO tiene
--- permisos sobre las tablas de negocio, con lo que se cierra la escalación total
--- que permitían las políticas genéricas "allow_all_*" anteriores.
--- `profiles` se gestiona con políticas estrictas a partir de auth_setup.sql.
+-- permisos sobre las tablas de negocio.
+-- Enforcement por rol a nivel de base de datos, vinculado a profiles(rol):
+--   - admin  -> lectura y escritura completa en las tablas de negocio.
+--   - basico -> solo lectura (SELECT) en las tablas de negocio.
+-- La capa de aplicación también limita por rol (RequireRole), pero RLS impide
+-- que un usuario autenticado cualquiera realice escrituras usando la clave
+-- anónima, sin depender únicamente de la guardia del cliente.
 -- =============================================================================
+
+-- Tabla de perfiles (rol por usuario autenticado). Se define antes que las
+-- políticas para que `is_admin()` pueda vincularlas a profiles(rol).
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email      TEXT NOT NULL UNIQUE,
+  nombre     TEXT,
+  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
+  activo     BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Verifica si el usuario actual es administrador (basado en profiles.rol).
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean
+LANGUAGE sql STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND rol = 'admin' AND activo
+  );
+$$;
+
 DO $$
 DECLARE t text;
 BEGIN
@@ -405,12 +433,25 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS "allow_all_auth_%I" ON %I;', t, t);
   END LOOP;
 
-  -- Tablas de negocio: lectura + escritura para usuarios autenticados.
-  -- (El control por rol se ejerce en la capa de aplicación vía `RequireRole`.)
+  -- Políticas por rol en cada tabla de negocio:
+  --   - admin_all_<tabla>: CRUD completo, solo si profiles.rol = 'admin'.
+  --   - basico_read_<tabla>: lectura para todo usuario autenticado.
   FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'profiles'
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS "business_all_auth_%I" ON %I;', t, t);
-    EXECUTE format('CREATE POLICY "business_all_auth_%I" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true);', t, t);
+    EXECUTE format('DROP POLICY IF EXISTS "admin_all_%I" ON %I;', t, t);
+    EXECUTE format('DROP POLICY IF EXISTS "basico_read_%I" ON %I;', t, t);
+
+    EXECUTE format(
+      'CREATE POLICY "admin_all_%I" ON %I
+         FOR ALL TO authenticated
+         USING (public.is_admin())
+         WITH CHECK (public.is_admin());', t, t);
+
+    EXECUTE format(
+      'CREATE POLICY "basico_read_%I" ON %I
+         FOR SELECT TO authenticated
+         USING (true);', t, t);
   END LOOP;
 END $$;
 
@@ -526,31 +567,10 @@ INSERT INTO encuestas (id_pedido, cliente_nombre, nivel_satisfaccion, tipo_clien
 -- =============================================================================
 -- 7. AUTENTICACIÓN Y PERFILES DE USUARIO (ROL ADMIN / BASICO)
 -- =============================================================================
--- La tabla de perfiles guarda el rol de cada usuario autenticado con Supabase Auth.
--- Se crea DESPUÉS del bloque de RLS genérico para definir políticas propias
--- (los usuarios gestionan su perfil; los administradores gestionan todos).
--- =============================================================================
-
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email      TEXT NOT NULL UNIQUE,
-  nombre     TEXT,
-  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
-  activo     BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Función que verifica si el usuario actual es administrador.
-CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean
-LANGUAGE sql STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND rol = 'admin' AND activo
-  );
-$$;
+-- La tabla `profiles` y la función `is_admin()` se definen en la sección 5
+-- (seguridad/RLS), antes que las políticas de negocio. Aquí se completa la
+-- gestión de perfiles: alta automática y políticas estrictas sobre la propia
+-- tabla de perfiles.
 
 -- Crea automáticamente el perfil cuando se da de alta un usuario en Supabase Auth.
 -- Rol asignado: 'admin' para el correo administrador configurado, 'basico' para el resto.
@@ -595,7 +615,4 @@ CREATE POLICY "profile_insert_own" ON public.profiles
   FOR INSERT TO authenticated
   WITH CHECK (id = auth.uid());
 
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
-GRANT SELECT ON public.profiles TO anon;
 GRANT ALL ON public.is_admin() TO authenticated;

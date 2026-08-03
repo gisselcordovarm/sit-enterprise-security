@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/authContext'
 import { validateEmail, validatePassword, checkPasswordStrength, PASSWORD_RULES, ADMIN_EMAIL } from '../../lib/roles'
-import { DEMO_MODE } from '../../lib/supabase'
+import { DEMO_MODE, DEMO_FALLBACK_ENABLED } from '../../lib/supabase'
 
 const STRENGTH_COLORS = ['var(--error)', 'var(--error)', 'var(--secondary)', 'var(--success)']
 
@@ -149,10 +149,16 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="auth-hint body-sm text-on-surface-variant">
-          Sesión demo — usá <b>{ADMIN_EMAIL}</b> con una contraseña segura
-          {DEMO_MODE ? ' (modo demo sin credenciales en Supabase)' : ''}. Creá el usuario administrador con <code>supabase/auth_admin.sql</code>.
-        </p>
+        {DEMO_MODE || DEMO_FALLBACK_ENABLED ? (
+          <p className="auth-hint body-sm text-on-surface-variant">
+            Sesión demo — usá <b>{ADMIN_EMAIL}</b> con una contraseña segura
+            {DEMO_MODE ? ' (modo demo sin credenciales en Supabase)' : ''}. Creá el usuario administrador con <code>supabase/auth_admin.sql</code>.
+          </p>
+        ) : (
+          <p className="auth-hint body-sm text-on-surface-variant">
+            Usá una cuenta creada en Supabase Auth. Creá el administrador con <code>supabase/auth_admin.sql</code>.
+          </p>
+        )}
       </div>
     </div>
   )

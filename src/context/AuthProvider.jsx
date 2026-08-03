@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { supabase, DEMO_MODE } from '../lib/supabase'
+import { supabase, DEMO_MODE, DEMO_FALLBACK_ENABLED } from '../lib/supabase'
 import { ROLES, ADMIN_EMAIL } from '../lib/roles'
 import { AuthContext } from './authContext'
 
@@ -59,9 +59,9 @@ export default function AuthProvider({ children }) {
     let subscription = null
 
     async function bootstrap() {
-      // Si hubo un ingreso registrado localmente (demo o fallback), lo restauramos
-      // siempre: mantiene la sesión tras recargar y resuelve el rol desde el correo.
-      const preSession = readLS(DEMO_SESSION_KEY)
+      // Restauración de sesión de respaldo SOLO cuando el fallback está
+      // habilitado explícitamente; en producción se exige sesión real.
+      const preSession = DEMO_MODE || DEMO_FALLBACK_ENABLED ? readLS(DEMO_SESSION_KEY) : null
       if (preSession?.email) {
         const prof = buildDemoProfile('demo', preSession.email)
         if (active) setState({ user: { id: 'demo', email: preSession.email }, profile: prof, loading: false })
@@ -110,10 +110,14 @@ export default function AuthProvider({ children }) {
       return null
     }
     const { data: signData, error } = await supabase.auth.signInWithPassword({ email: value, password })
-    // Funcionalidad total: si Supabase no autentica (backend no operativo o el
-    // usuario no existe), igual iniciamos sesión derivando el rol del correo,
-    // para que la aplicación siempre sea utilizable en demostración.
+    // Funcionalidad total: solo si el fallback está HABILITADO explícitamente
+    // (VITE_ENABLE_DEMO_FALLBACK='true') se ingresa derivando el rol del correo
+    // cuando Supabase no autentica. En producción sin esa variable, se exige
+    // autenticación real y se devuelve el error de credenciales.
     if (error || !signData?.user) {
+      if (!DEMO_FALLBACK_ENABLED) {
+        return error?.message || 'No se pudo autenticar. Verificá tus credenciales.'
+      }
       const profile = buildDemoProfile('demo', value)
       try { localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ email: value })) } catch { /* ignorar */ }
       setState({ user: { id: 'demo', email: value }, profile, loading: false })
