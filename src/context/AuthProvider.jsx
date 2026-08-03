@@ -4,24 +4,41 @@ import { ROLES, ADMIN_EMAIL } from '../lib/roles'
 import { AuthContext } from './authContext'
 
 const DEMO_STORAGE_KEY = 'sit_demo_profile'
+const DEMO_SESSION_KEY = 'sit_demo_session'
 
-function readDemoProfile() {
+function readLS(key) {
   try {
-    return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || 'null')
+    return JSON.parse(localStorage.getItem(key) || 'null')
   } catch {
     return null
+  }
+}
+
+// Construye el perfil en modo demo. El rol SIEMPRE se deriva del correo
+// (determinista y a prueba de datos obsoletos): admin@tecnoinnova.com => ADMIN,
+// cualquier otro => BASICO. Los datos editables (nombre/foto/teléfono/cargo) se
+// conservan del perfil guardado solo si corresponden al mismo correo.
+function buildDemoProfile(userId, email) {
+  const em = String(email || '').toLowerCase()
+  const isAdminEmail = em === ADMIN_EMAIL
+  const saved = readLS(DEMO_STORAGE_KEY)
+  const sameUser = saved && String(saved.email || '').toLowerCase() === em
+  return {
+    id: userId || 'demo',
+    email: email || 'demo@sit.local',
+    nombre: sameUser && saved.nombre ? saved.nombre : email || 'Sesión Demo',
+    foto: sameUser ? saved.foto ?? null : null,
+    telefono: sameUser ? saved.telefono ?? null : null,
+    cargo: sameUser ? saved.cargo ?? null : null,
+    rol: isAdminEmail ? ROLES.ADMIN : ROLES.BASICO,
+    activo: true,
   }
 }
 
 async function resolveProfile(userId, email) {
   // Modo demo (sin Supabase configurado): se autentica cualquier correo válido.
   if (DEMO_MODE || !supabase) {
-    const saved = readDemoProfile()
-    const isAdminEmail = String(email || '').toLowerCase() === ADMIN_EMAIL
-    // Admin SIEMPRE es admin; otros usan guardado si coincide el email, si no derivan basico.
-    if (isAdminEmail) return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: ROLES.ADMIN, activo: true }
-    if (saved?.email && String(saved.email).toLowerCase() === String(email || '').toLowerCase()) return saved
-    return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: ROLES.BASICO, activo: true }
+    return buildDemoProfile(userId, email)
   }
   const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (data) return { ...data, rol: data.rol || ROLES.BASICO }
@@ -43,7 +60,15 @@ export default function AuthProvider({ children }) {
 
     async function bootstrap() {
       if (DEMO_MODE || !supabase) {
-        if (active) setState({ user: null, profile: null, loading: false })
+        // Modo demo: si hay una sesión persistida, la restauramos (mantiene al
+        // usuario logueado tras recargar y resuelve el rol desde el correo).
+        const session = readLS(DEMO_SESSION_KEY)
+        if (session?.email) {
+          const prof = buildDemoProfile('demo', session.email)
+          if (active) setState({ user: { id: 'demo', email: session.email }, profile: prof, loading: false })
+        } else if (active) {
+          setState({ user: null, profile: null, loading: false })
+        }
         return
       }
       const { data: { session } } = await supabase.auth.getSession()
@@ -79,9 +104,8 @@ export default function AuthProvider({ children }) {
   const signIn = useCallback(async (email, password) => {
     const value = String(email || '').trim()
     if (DEMO_MODE || !supabase) {
-      const isAdmin = value.toLowerCase() === ADMIN_EMAIL
-      const profile = { id: 'demo', email: value, nombre: value, rol: isAdmin ? ROLES.ADMIN : ROLES.BASICO, activo: true }
-      try { localStorage.setItem('sit_demo_profile', JSON.stringify(profile)) } catch { /* ignorar */ }
+      const profile = buildDemoProfile('demo', value)
+      try { localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ email: value })) } catch { /* ignorar */ }
       setState({ user: { id: 'demo', email: value }, profile, loading: false })
       return null
     }
@@ -94,6 +118,7 @@ export default function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     if (supabase && !DEMO_MODE) await supabase.auth.signOut()
+    try { localStorage.removeItem(DEMO_SESSION_KEY) } catch { /* ignorar */ }
     setState({ user: null, profile: null, loading: false })
   }, [])
 
