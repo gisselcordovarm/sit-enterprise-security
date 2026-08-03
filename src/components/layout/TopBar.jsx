@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { ROL_LABELS } from '../../lib/roles';
 import { buscarGlobal } from '../../lib/data';
+import NotificationsMenu from '../common/NotificationsMenu';
 
 const TIPO_ICON = {
   pedido: 'receipt_long',
@@ -120,10 +121,7 @@ export default function TopBar({ onToggleSidebar }) {
 
       {/* Right actions: Notifications + Avatar */}
       <div className="topbar-actions">
-        <button className="icon-btn" title="Notificaciones" aria-label="Notificaciones">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="notification-dot"></span>
-        </button>
+        <NotificationsMenu />
 
         <Link to="/perfil" className="topbar-user" title={`${profile?.email || ''}`}>
           {profile?.foto ? (

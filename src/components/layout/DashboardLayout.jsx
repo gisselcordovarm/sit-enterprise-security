@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import NotificationsMenu from '../common/NotificationsMenu';
 
 export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,10 +56,7 @@ export default function DashboardLayout() {
           <span className="material-symbols-outlined text-primary" style={{ fontSize: '24px' }}>security</span>
           <span className="headline-md text-on-surface" style={{ fontSize: '16px', fontWeight: 'bold' }}>SIT Security</span>
         </div>
-        <button className="icon-btn" style={{ position: 'relative' }} aria-label="Notificaciones">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="notification-dot"></span>
-        </button>
+        <NotificationsMenu align="left" />
       </div>
 
       {/* Sidebar Navigation */}

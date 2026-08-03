@@ -837,6 +837,7 @@ export async function fetchAlertas() {
       title: r.titulo,
       description: r.descripcion,
       time: timeAgo(r.fecha),
+      fecha: r.fecha,
       details: r.detalles,
     }))
   }, () => [...demoAlertas])
