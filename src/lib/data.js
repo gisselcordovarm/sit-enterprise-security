@@ -865,6 +865,42 @@ export async function fetchMetricasSemanales() {
   })
 }
 
+// Etiqueta corta para un día en rangos mayores a la semana (p. ej. "12/03").
+function diaLabel(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`)
+  if (isNaN(d.getTime())) return dateStr
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// Métricas por rango de fechas (servicios y ventas agrupadas por día).
+// Reutiliza la misma lógica de v_metricas_semanales pero para cualquier rango.
+export async function fetchMetricasRango({ desde, hasta }) {
+  return withFallback(async () => {
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('fecha_pedido, monto_total, flag_aprobado')
+      .gte('fecha_pedido', desde)
+      .lte('fecha_pedido', hasta)
+    if (error) throw error
+    const byDay = {}
+    for (const r of data || []) {
+      const dia = String(r.fecha_pedido || '').slice(0, 10)
+      if (!dia) continue
+      if (!byDay[dia]) byDay[dia] = { servicios: 0, ventas: 0 }
+      byDay[dia].servicios += 1
+      if (r.flag_aprobado) byDay[dia].ventas += Number(r.monto_total || 0)
+    }
+    const dias = Object.keys(byDay).sort()
+    return {
+      op: dias.map((d) => ({ label: diaLabel(d), value: byDay[d].servicios })),
+      ing: dias.map((d) => ({ label: diaLabel(d), value: byDay[d].ventas })),
+    }
+  }, () => ({
+    op: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.servicios })),
+    ing: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.ventas })),
+  }))
+}
+
 // Reporte semanal por rango de fechas (agrupado por día).
 export async function fetchReporteSemanal({ desde, hasta }) {
   return withFallback(async () => {

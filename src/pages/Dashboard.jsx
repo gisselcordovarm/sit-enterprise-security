@@ -1,8 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataStatus from '../components/common/DataStatus';
-import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos } from '../lib/data';
+import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos, fetchMetricasRango } from '../lib/data';
 import { formatMoney } from '../lib/format';
+
+const PERIODS = {
+  week: { label: 'Esta Semana' },
+  month: { label: 'Este Mes' },
+  year: { label: 'Este Año' },
+};
+
+const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -15,6 +23,12 @@ export default function Dashboard() {
   const [estados, setEstados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
+
+  const [period, setPeriod] = useState('week');
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [rangeData, setRangeData] = useState(null);
+  const [periodLoading, setPeriodLoading] = useState(false);
+  const periodRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -35,6 +49,38 @@ export default function Dashboard() {
       });
     return () => { active = false; };
   }, []);
+
+  // Cuando el período es mes/año se consulta el rango real sobre pedidos.
+  useEffect(() => {
+    if (period === 'week') { setRangeData(null); return; }
+    let active = true;
+    setPeriodLoading(true);
+    const now = new Date();
+    let desde;
+    if (period === 'month') {
+      desde = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+      desde = new Date(now.getFullYear(), 0, 1);
+    }
+    fetchMetricasRango({ desde: isoLocal(desde), hasta: isoLocal(now) })
+      .then((res) => { if (active) setRangeData(res); })
+      .catch(() => { if (active) setRangeData({ op: [], ing: [] }); })
+      .finally(() => { if (active) setPeriodLoading(false); });
+    return () => { active = false; };
+  }, [period]);
+
+  // Cerrar el selector de período con clic fuera y con Escape.
+  useEffect(() => {
+    if (!periodOpen) return;
+    const onDown = (e) => { if (periodRef.current && !periodRef.current.contains(e.target)) setPeriodOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setPeriodOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [periodOpen]);
 
   // Cerrar el modal de alerta con la tecla Escape y manejar el foco.
   useEffect(() => {
@@ -72,7 +118,8 @@ export default function Dashboard() {
     return { label: `${pct > 0 ? '+' : ''}${pct}%`, up: pct > 0 };
   };
 
-  const chartData = buildChart(semana.op);
+  const activeSeries = period === 'week' ? semana : rangeData || { op: [], ing: [] };
+  const chartData = buildChart(activeSeries.op);
   const tendOp = seriesTrend(semana.op);
   const tendIng = seriesTrend(semana.ing);
   const ingresoSemana = semana.ing.reduce((s, r) => s + Number(r.value || 0), 0);
@@ -166,11 +213,62 @@ export default function Dashboard() {
 
           {/* System Activity Graph */}
           <div className="glass-panel" style={{ borderRadius: '1.5rem', padding: 'var(--card-padding)', height: '400px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 35 }}>
               <h3 className="headline-md text-on-surface">Actividad del Sistema</h3>
-              <div className="glass-panel" style={{ borderRadius: 'var(--radius-full)', padding: '4px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="body-sm text-on-surface-variant">Esta Semana</span>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--on-surface-variant)' }}>expand_more</span>
+              <div
+                ref={periodRef}
+                className="glass-panel"
+                style={{ borderRadius: 'var(--radius-full)', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', position: 'relative', zIndex: 20 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPeriodOpen((o) => !o)}
+                  aria-haspopup="menu"
+                  aria-expanded={periodOpen}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px 4px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}
+                >
+                  <span className="body-sm text-on-surface-variant">{PERIODS[period].label}</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--on-surface-variant)' }}>{periodOpen ? 'expand_less' : 'expand_more'}</span>
+                </button>
+                {periodLoading && (
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--on-surface-variant)', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+                )}
+                {periodOpen && (
+                  <div
+                    role="menu"
+                    style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '170px', background: 'var(--surface-container-highest)', borderRadius: 'var(--radius-lg)', boxShadow: '0 12px 32px rgba(0,0,0,0.22)', padding: '6px', zIndex: 40 }}
+                  >
+                    {Object.keys(PERIODS).map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={period === key}
+                        onClick={() => { setPeriod(key); setPeriodOpen(false); }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: period === key ? 'rgba(78, 71, 207, 0.12)' : 'none',
+                          border: 'none',
+                          borderRadius: 'var(--radius-md)',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '13px',
+                          color: period === key ? 'var(--primary)' : 'var(--on-surface)',
+                          fontWeight: period === key ? 700 : 500,
+                        }}
+                      >
+                        <span>{PERIODS[key].label}</span>
+                        {period === key && (
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--primary)' }}>check</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             {/* Decorative gradient */}
