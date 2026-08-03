@@ -2,14 +2,20 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, DEMO_MODE } from '../lib/supabase'
 import { checkPasswordStrength, PASSWORD_RULES } from '../lib/roles'
+import { checkActivation, activateAccount } from '../lib/data'
 
 const STRENGTH_COLORS = ['var(--error)', 'var(--error)', 'var(--secondary)', 'var(--success)']
 const STRENGTH_META = { 0: 'Muy débil', 1: 'Débil', 2: 'Aceptable', 3: 'Segura' }
 
 // Página pública de activación de cuenta (enlace de invitación del admin).
-// Verifica el token de invitación, deja definir la contraseña y activa el perfil.
+// Dos tipos de enlace:
+//   - ?token=<uuid>&email=..  : token propio generado por /api/invite.
+//     La contraseña se fija a través de /api/activar (service role).
+//   - ?token_hash=..&email=.. : enlace nativo de Supabase (correo enviado).
+//     Se valida con verifyOtp y la contraseña se fija con updateUser.
 export default function Activacion() {
   const [params] = useSearchParams()
+  const [mode, setMode] = useState(null) // 'token' | 'native'
   const [phase, setPhase] = useState('loading') // loading | form | done | error
   const [error, setError] = useState('')
   const [password, setPassword] = useState('')
@@ -18,9 +24,12 @@ export default function Activacion() {
 
   useEffect(() => {
     let active = true
-    const token = params.get('token_hash')
+    const rawToken = params.get('token')
+    const emailParam = params.get('email')
+    const tokenHash = params.get('token_hash')
     const type = params.get('type') || 'invite'
-    if (!token) {
+
+    if (!rawToken && !tokenHash) {
       if (active) { setPhase('error'); setError('El enlace de activación es inválido o está incompleto.') }
       return
     }
@@ -29,17 +38,36 @@ export default function Activacion() {
       return
     }
     ;(async () => {
-      const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: token, type })
-      if (!active) return
-      if (otpError) {
-        const msg = /expired|invalid|expirado|inv[aá]lido/i.test(String(otpError.message))
-          ? 'El enlace venció o ya fue utilizado. Pedile al administrador que regenere la invitación.'
-          : otpError.message
-        setPhase('error')
-        setError(msg)
+      // Token propio (generado por el admin vía /api/invite).
+      if (rawToken && emailParam) {
+        try {
+          await checkActivation({ token: rawToken, email: emailParam })
+          if (!active) return
+          setMode('token')
+          setPhase('form')
+        } catch (err) {
+          if (!active) return
+          setMode('token')
+          setPhase('error')
+          setError(err.message || 'El enlace de activación es inválido o ya fue utilizado.')
+        }
         return
       }
-      setPhase('form')
+      // Enlace nativo de Supabase (token_hash del correo).
+      if (tokenHash) {
+        const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+        if (!active) return
+        if (otpError) {
+          setMode('native')
+          setPhase('error')
+          setError(/expired|invalid|expirado|inv[aá]lido/i.test(String(otpError.message))
+            ? 'El enlace venció o ya fue utilizado. Pedile al administrador que regenere la invitación.'
+            : otpError.message)
+          return
+        }
+        setMode('native')
+        setPhase('form')
+      }
     })()
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,23 +81,32 @@ export default function Activacion() {
     if (!strength.allPass) { setError('La contraseña no cumple todos los requisitos de seguridad.'); return }
     if (password !== confirm) { setError('Las contraseñas no coinciden.'); return }
     setSubmitting(true)
-    const { error: passError } = await supabase.auth.updateUser({ password })
-    if (passError) {
+    try {
+      if (mode === 'token') {
+        await activateAccount({
+          token: params.get('token'),
+          email: params.get('email'),
+          password,
+        })
+      } else {
+        // Flujo nativo: sesión ya validada con verifyOtp; fijar contraseña.
+        const { error: passError } = await supabase.auth.updateUser({ password })
+        if (passError) throw new Error(passError.message)
+        const { data: current } = await supabase.auth.getUser()
+        const userId = current?.user?.id
+        if (userId) {
+          await supabase
+            .from('profiles')
+            .update({ estado: 'activo', activo: true, updated_at: new Date().toISOString() })
+            .eq('id', userId)
+        }
+      }
       setSubmitting(false)
-      setError(passError.message)
-      return
+      setPhase('done')
+    } catch (err) {
+      setSubmitting(false)
+      setError(err.message || 'No se pudo activar la cuenta. Probá nuevamente.')
     }
-    // Activa el perfil (fila propia, permitido por RLS de perfiles).
-    const { data: current } = await supabase.auth.getUser()
-    const userId = current?.user?.id
-    if (userId) {
-      await supabase
-        .from('profiles')
-        .update({ estado: 'activo', activo: true, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-    }
-    setSubmitting(false)
-    setPhase('done')
   }
 
   return (

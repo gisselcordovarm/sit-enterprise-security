@@ -830,6 +830,30 @@ export async function resendInvite(email) {
   }, () => ({ ok: true, link: '' }))
 }
 
+// Valida el token de invitación (sin consumo) antes de mostrar el formulario.
+export async function checkActivation({ token, email }) {
+  const res = await fetch('/api/activar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'check', token, email }),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.error || 'El enlace de activación es inválido.')
+  return json
+}
+
+// Completa la activación: fija la contraseña (service role) y activa el perfil.
+export async function activateAccount({ token, email, password }) {
+  const res = await fetch('/api/activar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'activate', token, email, password }),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.error || 'No se pudo activar la cuenta.')
+  return json
+}
+
 // Cambia el estado del ciclo de vida de un usuario ('activo' | 'inactivo').
 // 'pendiente' solo lo cambia el flujo de activación.
 export async function updateProfileState(id, estado) {

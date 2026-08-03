@@ -31,6 +31,7 @@ export default function Usuarios() {
   const [inviteLink, setInviteLink] = useState('')
   const [linkError, setLinkError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [emailSent, setEmailSent] = useState(true)
 
   useEffect(() => {
     let active = true
@@ -91,6 +92,7 @@ export default function Usuarios() {
   const openLinkModal = async (p) => {
     setMsg(''); setMsgError(''); setLinkError(''); setCopied(false)
     setInviteEmail(p.email)
+    setEmailSent(false)
     setShowLink(true)
     setInviteLink('')
     try {
@@ -118,10 +120,21 @@ export default function Usuarios() {
     if (!form.nombre.trim()) { setFormError('El nombre es obligatorio.'); return }
     setInviting(true)
     try {
-      await inviteUser({ email: form.email.trim(), nombre: form.nombre.trim(), rol: form.rol })
+      const res = await inviteUser({ email: form.email.trim(), nombre: form.nombre.trim(), rol: form.rol })
+      const invitedEmail = form.email.trim()
       setShowNew(false)
       setForm({ email: '', nombre: '', rol: 'basico' })
-      setMsg(`Invitación enviada a ${form.email.trim()}. El correo llegó con el enlace de activación (válido 24 h).`)
+      if (res.link) {
+        setInviteEmail(invitedEmail)
+        setInviteLink(res.link)
+        setLinkError('')
+        setCopied(false)
+        setEmailSent(res.emailSent !== false)
+        setMsg(res.message || 'Invitación creada.')
+        setShowLink(true)
+      } else {
+        setMsg(`Invitación enviada a ${invitedEmail}. El correo llegó con el enlace de activación (válido 24 h).`)
+      }
       await refresh()
     } catch (err) {
       console.error(err)
@@ -314,8 +327,8 @@ export default function Usuarios() {
             </div>
             <div className="modal-body">
               <p className="body-sm text-on-surface-variant" style={{ marginBottom: '12px' }}>
-                Invitación para <b>{inviteEmail}</b>. Copiá este enlace y reenvialo al usuario. Expira en 24 horas y
-                reemplaza cualquier invitación anterior.
+                Invitación para <b>{inviteEmail}</b>. {emailSent ? 'Se envió el correo de activación.' : 'El correo no pudo enviarse.'}{' '}
+                Copiá este enlace y reenvialo al usuario. Expira en 24 horas y reemplaza cualquier invitación anterior.
               </p>
               {linkError ? (
                 <div className="auth-error-banner"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span> {linkError}</div>
