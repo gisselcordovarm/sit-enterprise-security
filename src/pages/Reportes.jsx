@@ -222,6 +222,9 @@ export default function Reportes() {
                     <td className="body-sm text-on-surface">{i.stock}</td>
                   </tr>
                 ))}
+                {inventario.length === 0 && (
+                  <tr><td colSpan="3" style={{ textAlign: 'center', color: 'var(--on-surface-variant)', padding: '18px' }}>Sin componentes en el inventario.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -253,6 +256,9 @@ export default function Reportes() {
                     <td className="body-sm text-on-surface">{t.workload}</td>
                   </tr>
                 ))}
+                {tecnicos.length === 0 && (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--on-surface-variant)', padding: '18px' }}>Sin técnicos enlistados.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

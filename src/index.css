@@ -15,6 +15,7 @@
   --error-container: #ffdad6;
   --success: #0e9f6e;
   --success-container: #d7f5e8;
+  --badge-success-text: #0a7b55;
   --on-background: #181c21;
   --on-surface: #181c21;
   --on-surface-variant: #464554;
@@ -829,7 +830,7 @@ body {
 .badge-success {
   background: var(--tint-success);
   border: 1px solid rgba(14, 159, 110, 0.3);
-  color: #0a7b55;
+  color: var(--badge-success-text);
 }
 
 .badge-warning {

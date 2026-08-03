@@ -30,10 +30,10 @@ export function formatDate(dateStr) {
 // =============================================================================
 
 const demoPedidos = [
-  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 350, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', zona: 'Caracas, Libertador, Distrito Capital' },
-  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 1200, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', zona: 'Maracaibo, Maracaibo, Zulia' },
-  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 850, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, zona: 'Valencia, Valencia, Carabobo' },
-  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 6800, fecha: '2026-06-08', error_pago: null, motivoFeat: null, zona: 'Maracay, Girardot, Aragua' },
+  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 350, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', geoEstado: 'Distrito Capital', municipio: 'Libertador', ciudad: 'Caracas', zona: 'Caracas, Libertador, Distrito Capital' },
+  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 1200, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', geoEstado: 'Zulia', municipio: 'Maracaibo', ciudad: 'Maracaibo', zona: 'Maracaibo, Maracaibo, Zulia' },
+  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 850, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, geoEstado: 'Carabobo', municipio: 'Valencia', ciudad: 'Valencia', zona: 'Valencia, Valencia, Carabobo' },
+  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 6800, fecha: '2026-06-08', error_pago: null, motivoFeat: null, geoEstado: 'Aragua', municipio: 'Girardot', ciudad: 'Maracay', zona: 'Maracay, Girardot, Aragua' },
 ]
 
 const demoInventario = [
@@ -65,7 +65,7 @@ const demoAssignments = [
 ]
 
 const demoInstalaciones = [
-  { id: 'INST-9001', taskId: 'TSK-7844', client: 'Lucas Peralta', address: 'Av. Francisco de Miranda, Chacao, Caracas', service: 'Instalación Cámaras Residenciales', components: '3x Cámaras Domo IP, 1x NVR 8 Canales', estado: 'Programada' },
+  { id: 'INST-9001', taskId: 'TSK-7844', client: 'Lucas Peralta', address: 'Av. Francisco de Miranda, Chacao, Distrito Capital', zone: 'Distrito Capital', service: 'Instalación Cámaras Residenciales', components: '3x Cámaras Domo IP, 1x NVR 8 Canales', estado: 'Programada', tecnico: 'TECH-01' },
 ]
 
 const demoFacturas = [
@@ -147,13 +147,12 @@ export function defaultEquipoCodigo(servicio) {
 }
 
 async function withFallback(fn, fallback) {
-  if (!supabase) return fallback()
-  try {
-    return await fn()
-  } catch (e) {
-    console.warn('Supabase query fallback a demo:', e?.message || e)
-    return fallback()
-  }
+  // Sin Supabase configurado → modo demo con datos locales.
+  if (DEMO_MODE || !supabase) return fallback()
+  // Con Supabase activo: se consulta en vivo. Los errores reales se relanzan
+  // para que la UI los muestre (liveError) en lugar de devolver datos demo en
+  //m: enmascarar, como ocurría antes.
+  return await fn()
 }
 
 // =============================================================================
@@ -880,7 +879,10 @@ export async function fetchReporteSemanal({ desde, hasta }) {
     if (error) throw error
     return agregarPorFecha((data || []), desde, hasta)
   }, () => {
-    const rows = demoPedidos.filter((p) => p.fecha >= desde && p.fecha <= hasta)
+    const rows = demoPedidos.filter((p) => {
+      const d = String(p.fecha).slice(0, 10)
+      return d >= desde && d <= hasta
+    })
     return agregarPorFecha(rows.map((p) => ({ fecha_pedido: p.fecha, monto_total: p.total, flag_aprobado: p.flag_aprobado })), desde, hasta)
   })
 }

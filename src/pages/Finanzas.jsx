@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { jsPDF } from 'jspdf';
 import DataStatus from '../components/common/DataStatus';
 import {
   fetchFacturas, fetchFacturables, generarFactura,
   fetchLogs, registrarLog,
 } from '../lib/data';
 import { formatMoney } from '../lib/format';
+import { generarPdfFactura } from '../lib/reportes';
 
 export default function Finanzas() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -37,69 +37,7 @@ export default function Finanzas() {
     return () => { active = false; };
   }, []);
 
-  // PDF Generator using jsPDF
-  const generatePDF = (inv) => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-      // Header Brand
-      doc.setFillColor(11, 19, 38);
-      doc.rect(0, 0, 210, 40, 'F');
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.text('SIT ENTERPRISE SECURITY', 15, 18);
-
-      doc.setFontSize(10);
-      doc.text('Sistema Integrado TecnoInnova S.A.', 15, 25);
-      doc.text('Factura Electrónica B', 15, 30);
-
-      // Invoice metadata
-      doc.setTextColor(230, 230, 230);
-      doc.text(`Nro Factura: ${inv.id}`, 140, 18);
-      doc.text(`Fecha: ${inv.fecha}`, 140, 25);
-      doc.text(`Orden: ${inv.orderId}`, 140, 32);
-
-      // Customer Info
-      doc.setFillColor(240, 240, 240);
-      doc.rect(15, 50, 180, 25, 'F');
-
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(11);
-      doc.text(`CLIENTE: ${inv.cliente.toUpperCase()}`, 20, 56);
-      doc.text(`RIF: ${inv.rif}`, 20, 62);
-      doc.text('Condición IVA: Contribuyente Formal', 20, 68);
-
-      // Items Table header
-      doc.setFillColor(194, 198, 216);
-      doc.rect(15, 85, 180, 10, 'F');
-      doc.setTextColor(0, 0, 0);
-      doc.setFont('Helvetica', 'bold');
-      doc.text('Descripción del Servicio', 20, 91);
-      doc.text('Importe (USD)', 150, 91);
-
-      // Items Row
-      doc.setFont('Helvetica', 'normal');
-      inv.items.forEach((item, index) => {
-        const y = 105 + index * 10;
-        doc.text(item, 20, y);
-      });
-
-      // Divider line
-      doc.setDrawColor(150, 150, 150);
-      doc.line(15, 140, 195, 140);
-
-      // Total Box
-      doc.setFontSize(14);
-      doc.setFont('Helvetica', 'bold');
-      doc.text('TOTAL FACTURADO:', 95, 155);
-      doc.text(formatMoney(inv.total), 150, 155);
-
-      doc.save(`Factura-${inv.id}-${inv.cliente.replace(/\s+/g, '-')}.pdf`);
-  };
+  // La generación del PDF de factura usa el generador compartido (lib/reportes.js).
 
   const addLog = async (tipo, descripcion, monto = 0) => {
     try {
@@ -119,7 +57,7 @@ export default function Finanzas() {
       const invoice = await generarFactura(facturable);
       setInvoices((prev) => [invoice, ...prev]);
       setFacturables((prev) => prev.filter((f) => f.id_pedido !== facturable.id_pedido));
-      generatePDF(invoice);
+      generarPdfFactura(invoice);
       await addLog('Ajuste', `Exportación PDF Factura ${invoice.id}`, 0);
     } catch (e) {
       console.error('Error al generar factura:', e);
@@ -138,7 +76,7 @@ export default function Finanzas() {
     setGeneratingId(inv.id);
     setEmailAlert(null);
     try {
-      generatePDF(inv);
+      generarPdfFactura(inv);
       await addLog('Ajuste', `Exportación PDF Factura ${inv.id}`, 0);
     } catch (err) {
       console.error('Error al exportar PDF:', err);
@@ -304,6 +242,9 @@ export default function Finanzas() {
                 )}
               </div>
             ))}
+            {invoices.length === 0 && (
+              <p className="body-sm text-on-surface-variant" style={{ textAlign: 'center', padding: '16px' }}>No hay facturas emitidas todavía.</p>
+            )}
           </div>
         </section>
 
@@ -347,6 +288,9 @@ export default function Finanzas() {
                     </td>
                   </tr>
                 ))}
+                {financeLogs.length === 0 && (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--on-surface-variant)', padding: '24px' }}>Sin movimientos registrados en el libro.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

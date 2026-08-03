@@ -269,6 +269,9 @@ export default function Postventa() {
                 )}
               </div>
             ))}
+            {incidents.length === 0 && (
+              <p className="body-sm text-on-surface-variant" style={{ textAlign: 'center', padding: '16px' }}>No hay incidencias registradas.</p>
+            )}
           </div>
         </section>
 
@@ -337,6 +340,9 @@ export default function Postventa() {
                   <p className="body-sm text-on-surface-variant" style={{ fontStyle: 'italic' }}>"{s.comment}"</p>
                 </div>
               ))}
+              {surveys.length === 0 && (
+                <p className="body-sm text-on-surface-variant" style={{ textAlign: 'center', padding: '16px' }}>Aún no hay encuestas de satisfacción.</p>
+              )}
             </div>
           </div>
         </section>
