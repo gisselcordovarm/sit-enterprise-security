@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { modulesFor } from '../../lib/roles';
 import { useState, useEffect } from 'react';
@@ -42,24 +42,25 @@ export default function Sidebar() {
 
       <nav className="sidebar-menu" role="navigation" aria-label="Navegación principal">
         {navItems.map((item) => (
-          <a
+          <button
             key={item.to}
-            href={item.to}
+            type="button"
             className={`sidebar-link ${isActivePath(item.to) ? 'active' : ''}`}
+            onClick={() => navigate(item.to)}
             aria-current={isActivePath(item.to) ? 'page' : undefined}
           >
             <span className="material-symbols-outlined nav-icon" style={{ fontVariationSettings: "'FILL' 1" }}>{item.icon}</span>
             <span className="nav-label body-md">{item.label}</span>
-          </a>
+          </button>
         ))}
       </nav>
 
       <div className="sidebar-footer">
         <div className="footer-nav">
-          <a href="/perfil" className={`sidebar-link ${isActivePath('/perfil') ? 'active' : ''}`} aria-current={isActivePath('/perfil') ? 'page' : undefined}>
+          <NavLink to="/perfil" className="sidebar-link">
             <span className="material-symbols-outlined">person</span>
             <span className="nav-label body-md">Perfil</span>
-          </a>
+          </NavLink>
         </div>
         <button className="sidebar-logout btn btn-ghost" onClick={signOut}>
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>

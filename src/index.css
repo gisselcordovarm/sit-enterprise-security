@@ -280,6 +280,11 @@ body {
   display: flex;
   align-items: center;
   gap: var(--stack-md);
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
   position: relative;
   z-index: 92;
   pointer-events: auto;
