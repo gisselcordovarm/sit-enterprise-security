@@ -19,7 +19,6 @@ export default function Sidebar() {
   }, []);
 
   const isActivePath = (to) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to));
-
   return (
     <aside className={`sidebar glass-panel ${isMobile ? 'mobile-hidden' : ''} ${!isExpanded && !isMobile ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -43,11 +42,11 @@ export default function Sidebar() {
       <nav className="sidebar-menu" role="navigation" aria-label="Navegación principal">
         {navItems.map((item) => (
           <button
-            key={item.to}
+            key={item.path}
             type="button"
-            className={`sidebar-link ${isActivePath(item.to) ? 'active' : ''}`}
-            onClick={() => navigate(item.to)}
-            aria-current={isActivePath(item.to) ? 'page' : undefined}
+            className={`sidebar-link ${isActivePath(item.path) ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
+            aria-current={isActivePath(item.path) ? 'page' : undefined}
           >
             <span className="material-symbols-outlined nav-icon" style={{ fontVariationSettings: "'FILL' 1" }}>{item.icon}</span>
             <span className="nav-label body-md">{item.label}</span>
