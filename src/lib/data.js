@@ -771,7 +771,10 @@ export async function fetchProfiles() {
   return withFallback(async () => {
     const { data, error } = await supabase.from('profiles').select('*').order('created_at')
     if (error) throw error
-    return data || []
+    return (data || []).map((p) => ({
+      ...p,
+      estado: p.estado || (p.activo === false ? 'inactivo' : 'activo'),
+    }))
   }, () => demoProfiles.map((p) => ({ ...p })))
 }
 
@@ -787,6 +790,58 @@ export async function updateProfileRole(id, rol) {
     if (p) p.rol = rol
     return p || {}
   })
+}
+
+// =============================================================================
+// INVITACIÓN DE USUARIOS (solo administradores, vía función serverless)
+// =============================================================================
+
+// Envía la invitación (correo de activación con token) para un nuevo usuario.
+// La operación privilegiada corre en /api/invite con la service_role key.
+export async function inviteUser({ email, nombre, rol }) {
+  return withFallback(async () => {
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'invite', email, nombre, rol }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || 'No se pudo enviar la invitación.')
+    return json
+  }, () => ({ ok: true }))
+}
+
+// Regenera el enlace de invitación de un usuario en estado 'pendiente'.
+// Devuelve el enlace (válido 24h) para que el admin lo reenvíe manualmente.
+export async function resendInvite(email) {
+  return withFallback(async () => {
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'resend', email }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || 'No se pudo regenerar la invitación.')
+    return json
+  }, () => ({ ok: true, link: '' }))
+}
+
+// Cambia el estado del ciclo de vida de un usuario ('activo' | 'inactivo').
+// 'pendiente' solo lo cambia el flujo de activación.
+export async function updateProfileState(id, estado) {
+  return withFallback(async () => {
+    const activo = estado === 'activo'
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ estado, activo, updated_at: new Date().toISOString() })
+      .eq('id', id).select('*').single()
+    if (error) throw error
+    return data
+  }, () => ({ id, estado, activo: estado === 'activo' }))
 }
 
 // =============================================================================

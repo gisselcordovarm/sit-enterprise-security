@@ -12,6 +12,7 @@ import Postventa from './pages/Postventa'
 import Usuarios from './pages/Usuarios'
 import Reportes from './pages/Reportes'
 import Perfil from './pages/Perfil'
+import Activacion from './pages/Activacion'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           {/* Acceso público */}
           <Route path="/login" element={<Login />} />
+          <Route path="/activar" element={<Activacion />} />
 
           {/* Zona protegida (requiere sesión) */}
           <Route

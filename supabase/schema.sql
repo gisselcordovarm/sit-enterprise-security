@@ -407,6 +407,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   nombre     TEXT,
   rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
   activo     BOOLEAN NOT NULL DEFAULT true,
+  estado     TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('pendiente', 'activo', 'inactivo')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -573,18 +574,27 @@ INSERT INTO encuestas (id_pedido, cliente_nombre, nivel_satisfaccion, tipo_clien
 -- tabla de perfiles.
 
 -- Crea automáticamente el perfil cuando se da de alta un usuario en Supabase Auth.
--- Rol asignado: 'admin' para el correo administrador configurado, 'basico' para el resto.
+-- Rol asignado: 'admin' para el correo administrador configurado; para el resto
+-- se toma de `raw_user_meta_data.rol` (solo 'admin' o 'basico', nunca confiado
+-- sin validar; el administrador lo define al invitar desde la app). El estado
+-- inicial es 'activo' para el admin y 'pendiente' para los invitados (deben
+-- activar su cuenta definiendo su contraseña con el enlace de invitación).
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, nombre, rol)
+  INSERT INTO public.profiles (id, email, nombre, rol, estado)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data ->> 'nombre', NEW.email),
-    CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin' ELSE 'basico' END
+    CASE
+      WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin'
+      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico') THEN NEW.raw_user_meta_data ->> 'rol'
+      ELSE 'basico'
+    END,
+    CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'activo' ELSE 'pendiente' END
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;

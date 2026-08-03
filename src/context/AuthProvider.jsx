@@ -46,9 +46,9 @@ async function resolveProfile(userId, email) {
   const defaultRol = String(email || '').toLowerCase() === ADMIN_EMAIL ? ROLES.ADMIN : ROLES.BASICO
   const { data: created } = await supabase
     .from('profiles')
-    .insert({ id: userId, email, nombre: email, rol: defaultRol })
+    .insert({ id: userId, email, nombre: email, rol: defaultRol, estado: 'activo', activo: true })
     .select('*').single()
-  return created || { userId: userId, email, rol: defaultRol, activo: true }
+  return created || { userId: userId, email, rol: defaultRol, activo: true, estado: 'activo' }
 }
 
 export default function AuthProvider({ children }) {
@@ -124,6 +124,14 @@ export default function AuthProvider({ children }) {
       return null
     }
     const prof = await resolveProfile(signData.user.id, signData.user.email)
+    // Guardia de estado: solo cuentas activas pueden ingresar con contraseña.
+    // Las invitadas ('pendiente') y desactivadas ('inactivo') quedan bloqueadas.
+    if (prof && prof.estado !== 'activo') {
+      await supabase.auth.signOut()
+      return prof.estado === 'pendiente'
+        ? 'Tu cuenta está pendiente de activación. Revisá el correo de invitación.'
+        : 'Tu cuenta está desactivada. Contactá al administrador.'
+    }
     setState({ user: signData.user, profile: prof, loading: false })
     return null
   }, [])
