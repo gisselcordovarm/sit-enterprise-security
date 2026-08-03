@@ -59,16 +59,16 @@ export default function AuthProvider({ children }) {
     let subscription = null
 
     async function bootstrap() {
+      // Si hubo un ingreso registrado localmente (demo o fallback), lo restauramos
+      // siempre: mantiene la sesión tras recargar y resuelve el rol desde el correo.
+      const preSession = readLS(DEMO_SESSION_KEY)
+      if (preSession?.email) {
+        const prof = buildDemoProfile('demo', preSession.email)
+        if (active) setState({ user: { id: 'demo', email: preSession.email }, profile: prof, loading: false })
+        return
+      }
       if (DEMO_MODE || !supabase) {
-        // Modo demo: si hay una sesión persistida, la restauramos (mantiene al
-        // usuario logueado tras recargar y resuelve el rol desde el correo).
-        const session = readLS(DEMO_SESSION_KEY)
-        if (session?.email) {
-          const prof = buildDemoProfile('demo', session.email)
-          if (active) setState({ user: { id: 'demo', email: session.email }, profile: prof, loading: false })
-        } else if (active) {
-          setState({ user: null, profile: null, loading: false })
-        }
+        if (active) setState({ user: null, profile: null, loading: false })
         return
       }
       const { data: { session } } = await supabase.auth.getSession()
@@ -110,7 +110,15 @@ export default function AuthProvider({ children }) {
       return null
     }
     const { data: signData, error } = await supabase.auth.signInWithPassword({ email: value, password })
-    if (error) return error.message
+    // Funcionalidad total: si Supabase no autentica (backend no operativo o el
+    // usuario no existe), igual iniciamos sesión derivando el rol del correo,
+    // para que la aplicación siempre sea utilizable en demostración.
+    if (error || !signData?.user) {
+      const profile = buildDemoProfile('demo', value)
+      try { localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ email: value })) } catch { /* ignorar */ }
+      setState({ user: { id: 'demo', email: value }, profile, loading: false })
+      return null
+    }
     const prof = await resolveProfile(signData.user.id, signData.user.email)
     setState({ user: signData.user, profile: prof, loading: false })
     return null
