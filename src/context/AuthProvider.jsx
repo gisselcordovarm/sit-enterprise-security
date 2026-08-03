@@ -17,8 +17,9 @@ async function resolveProfile(userId, email) {
   // Modo demo (sin Supabase configurado): se autentica cualquier correo válido.
   if (DEMO_MODE || !supabase) {
     const saved = readDemoProfile()
-    if (saved?.email) return saved
     const isAdminEmail = String(email || '').toLowerCase() === ADMIN_EMAIL
+    // Si hay perfil guardado y coincide el email, úsalo; si no, deriva rol del email actual.
+    if (saved?.email && String(saved.email).toLowerCase() === String(email || '').toLowerCase()) return saved
     return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: isAdminEmail ? ROLES.ADMIN : ROLES.BASICO, activo: true }
   }
   const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
