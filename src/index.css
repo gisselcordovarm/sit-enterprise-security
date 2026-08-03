@@ -137,6 +137,14 @@ body {
   .main-content {
     margin-left: var(--sidebar-width);
   }
+  .main-content.sidebar-hidden {
+    margin-left: 0;
+  }
+}
+
+/* Sidebar completamente oculto (toggle del TopBar en escritorio) */
+.sidebar.sidebar-hidden {
+  transform: translateX(-100%);
 }
 
 @media (min-width: 1024px) {
@@ -388,7 +396,7 @@ body {
 }
 
 .topbar-menu-btn {
-  display: none;
+  display: flex;
 }
 
 .topbar-crumb {
@@ -541,7 +549,6 @@ body {
   .topbar {
     grid-template-columns: auto 1fr auto;
   }
-  .topbar-menu-btn { display: flex; }
   .topbar-actions { gap: var(--stack-sm); }
   .search-wrap { max-width: none; }
 }

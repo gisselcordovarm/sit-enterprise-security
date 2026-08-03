@@ -6,6 +6,7 @@ import TopBar from './TopBar';
 export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarHidden, setSidebarHidden] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -23,6 +24,16 @@ export default function DashboardLayout() {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  // Botón de tres líneas del TopBar: en móvil abre el cajón; en escritorio
+  // oculta/redespliega el sidebar.
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setMobileMenuOpen((o) => !o);
+    } else {
+      setSidebarHidden((o) => !o);
+    }
+  };
+
   const sidebarStyle = isMobile
     ? {
         transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
@@ -30,6 +41,8 @@ export default function DashboardLayout() {
         boxShadow: mobileMenuOpen ? '0 0 24px rgba(0,0,0,0.5)' : 'none',
       }
     : {};
+
+  const mainClass = `main-content mobile-top-offset${!isMobile && sidebarHidden ? ' sidebar-hidden' : ''}`;
 
   return (
     <div className="dashboard-layout">
@@ -50,12 +63,12 @@ export default function DashboardLayout() {
 
       {/* Sidebar Navigation */}
       <div style={sidebarStyle} onClick={() => isMobile && setMobileMenuOpen(false)}>
-        <Sidebar />
+        <Sidebar hidden={sidebarHidden} />
       </div>
 
       {/* Main Content Area */}
-      <main className="main-content mobile-top-offset">
-        <TopBar onToggleMobileMenu={toggleMobileMenu} />
+      <main className={mainClass}>
+        <TopBar onToggleSidebar={toggleSidebar} />
         
         {/* Backdrop overlay for mobile sidebar */}
         {isMobile && mobileMenuOpen && (

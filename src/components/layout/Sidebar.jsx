@@ -3,7 +3,7 @@ import { useAuth } from '../../context/authContext';
 import { modulesFor } from '../../lib/roles';
 import { useState, useEffect } from 'react';
 
-export default function Sidebar() {
+export default function Sidebar({ hidden = false }) {
   const { rol, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,7 +20,7 @@ export default function Sidebar() {
 
   const isActivePath = (to) => (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to));
   return (
-    <aside className={`sidebar glass-panel ${isMobile ? 'mobile-hidden' : ''} ${!isExpanded && !isMobile ? 'collapsed' : ''}`}>
+    <aside className={`sidebar glass-panel ${hidden && !isMobile ? 'sidebar-hidden' : ''} ${!isExpanded && !isMobile ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <img src="/tecnoinnova-logo.png" alt="TecnoInnova" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />

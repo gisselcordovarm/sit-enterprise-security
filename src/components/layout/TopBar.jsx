@@ -11,7 +11,7 @@ const TIPO_ICON = {
   factura: 'request_quote',
 };
 
-export default function TopBar({ onToggleMobileMenu }) {
+export default function TopBar({ onToggleSidebar }) {
   const { profile, rol, signOut } = useAuth();
   const roleLabel = ROL_LABELS[rol] || rol;
   const navigate = useNavigate();
@@ -65,8 +65,8 @@ export default function TopBar({ onToggleMobileMenu }) {
 
   return (
     <header className="topbar glass-panel">
-      {/* Mobile toggle */}
-      <button className="icon-btn topbar-menu-btn" onClick={onToggleMobileMenu} aria-label="Abrir menú">
+      {/* Sidebar toggle */}
+      <button className="icon-btn topbar-menu-btn" onClick={onToggleSidebar} aria-label="Ocultar o mostrar el menú lateral">
         <span className="material-symbols-outlined" style={{ color: 'var(--on-surface)' }}>menu</span>
       </button>
 
