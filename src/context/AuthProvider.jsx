@@ -18,9 +18,10 @@ async function resolveProfile(userId, email) {
   if (DEMO_MODE || !supabase) {
     const saved = readDemoProfile()
     const isAdminEmail = String(email || '').toLowerCase() === ADMIN_EMAIL
-    // Si hay perfil guardado y coincide el email, úsalo; si no, deriva rol del email actual.
+    // Admin SIEMPRE es admin; otros usan guardado si coincide el email, si no derivan basico.
+    if (isAdminEmail) return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: ROLES.ADMIN, activo: true }
     if (saved?.email && String(saved.email).toLowerCase() === String(email || '').toLowerCase()) return saved
-    return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: isAdminEmail ? ROLES.ADMIN : ROLES.BASICO, activo: true }
+    return { id: userId || 'demo', email: email || 'demo@sit.local', nombre: 'Sesión Demo', rol: ROLES.BASICO, activo: true }
   }
   const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (data) return { ...data, rol: data.rol || ROLES.BASICO }
@@ -79,11 +80,9 @@ export default function AuthProvider({ children }) {
     const value = String(email || '').trim()
     if (DEMO_MODE || !supabase) {
       const isAdmin = value.toLowerCase() === ADMIN_EMAIL
-      setState({
-        user: { id: 'demo', email: value },
-        profile: { id: 'demo', email: value, nombre: value, rol: isAdmin ? ROLES.ADMIN : ROLES.BASICO, activo: true },
-        loading: false,
-      })
+      const profile = { id: 'demo', email: value, nombre: value, rol: isAdmin ? ROLES.ADMIN : ROLES.BASICO, activo: true }
+      try { localStorage.setItem('sit_demo_profile', JSON.stringify(profile)) } catch { /* ignorar */ }
+      setState({ user: { id: 'demo', email: value }, profile, loading: false })
       return null
     }
     const { data: signData, error } = await supabase.auth.signInWithPassword({ email: value, password })
