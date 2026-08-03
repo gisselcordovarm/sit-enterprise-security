@@ -186,7 +186,7 @@ body {
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 50;
+  z-index: 90;
   border-right: 1px solid var(--glass-border);
   transition: width 0.2s ease, transform 0.2s ease;
 }
@@ -271,12 +271,18 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  position: relative;
+  z-index: 91;
+  pointer-events: auto;
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
   gap: var(--stack-md);
+  position: relative;
+  z-index: 92;
+  pointer-events: auto;
   padding: 12px 16px;
   border-radius: var(--radius-full);
   color: var(--on-surface-variant);
