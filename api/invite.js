@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendActivationEmail } from '../mailer.js'
 
 // Función serverless de Vercel (API). Usa la clave `service_role` SOLO en el
 // servidor: nunca se expone al navegador. Valida que quien invoca sea un
@@ -66,7 +67,12 @@ export default async function handler(req, res) {
   // 1) Identifica al llamador con su JWT de sesión.
   const { data: caller, error: callerErr } = await admin.auth.getUser(token)
   if (callerErr || !caller?.user) {
-    return res.status(401).json({ error: 'Sesión inválida. Volvé a iniciar sesión.' })
+    console.error('[invite] auth getUser error:', callerErr?.status, callerErr?.message, 'url:', SUPABASE_URL)
+    return res.status(401).json({
+      error: 'Sesión inválida. Volvé a iniciar sesión.',
+      authError: callerErr?.message || 'usuario no encontrado',
+      authStatus: callerErr?.status || null,
+    })
   }
 
   // 2) Exige rol administrador (enforcement a nivel de base de datos).
@@ -106,11 +112,16 @@ export default async function handler(req, res) {
       try {
         await admin.from('profiles').update({ estado: 'pendiente', activo: false }).eq('id', prof.id)
       } catch (e) { console.error('[invite] update estado pendiente:', e?.message) }
+      const link = `${SITE_URL}/activar?token=${encodeURIComponent(invToken)}&email=${encodeURIComponent(cleanEmail)}`
+      const mail = await sendActivationEmail({ to: cleanEmail, link, name: u.user.user_metadata?.nombre })
+      console.log('[invite] resend mail:', mail.ok ? 'enviado' : 'no enviado (' + mail.error + ')')
       return res.status(200).json({
         ok: true,
-        link: `${SITE_URL}/activar?token=${encodeURIComponent(invToken)}&email=${encodeURIComponent(cleanEmail)}`,
-        emailSent: false,
-        message: 'Enlace de activación regenerado (válido 24 h).',
+        link,
+        emailSent: mail.ok,
+        message: mail.ok
+          ? 'Invitación regenerada. Se envió el correo de activación.'
+          : 'Enlace de activación regenerado (válido 24 h). No se pudo enviar el correo: ' + (mail.error || 'revisá MAILTRAP_API_TOKEN'),
       })
     }
 
@@ -153,11 +164,17 @@ export default async function handler(req, res) {
         .eq('id', userId)
     } catch (e) { console.error('[invite] update perfil:', e?.message) }
 
+    const link = `${SITE_URL}/activar?token=${encodeURIComponent(invToken)}&email=${encodeURIComponent(cleanEmail)}`
+    const mail = await sendActivationEmail({ to: cleanEmail, link, name: String(nombre || '').trim() })
+    console.log('[invite] invite mail:', mail.ok ? 'enviado' : 'no enviado (' + mail.error + ')')
+
     return res.status(200).json({
       ok: true,
-      link: `${SITE_URL}/activar?token=${encodeURIComponent(invToken)}&email=${encodeURIComponent(cleanEmail)}`,
-      emailSent: false,
-      message: 'Invitación creada. Usá el enlace para que el usuario active su cuenta.',
+      link,
+      emailSent: mail.ok,
+      message: mail.ok
+        ? 'Invitación creada. Se envió el correo de activación.'
+        : 'Invitación creada. No se pudo enviar el correo: ' + (mail.error || 'revisá MAILTRAP_API_TOKEN') + '. Usá el enlace generado.',
     })
   } catch (err) {
     return res.status(400).json(errBody(err))
