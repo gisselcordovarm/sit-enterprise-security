@@ -70,7 +70,6 @@ export default function Activacion() {
       }
     })()
     return () => { active = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
 
   const strength = checkPasswordStrength(password)
@@ -105,7 +104,7 @@ export default function Activacion() {
       setPhase('done')
     } catch (err) {
       setSubmitting(false)
-      setError(err.message || 'No se pudo activar la cuenta. Probá nuevamente.')
+      setError(err.message || 'No se pudo activar la cuenta. Prueba nuevamente.')
     }
   }
 
@@ -113,18 +112,16 @@ export default function Activacion() {
     <div className="auth-page">
       <div className="auth-bg" />
       <div className="auth-card glass-panel">
-        <div className="auth-logo">
-          <img src="/tecnoinnova-logo.png" alt="TecnoInnova" style={{ objectFit: 'contain' }} />
-          <div>
-            <span className="headline-md text-on-surface" style={{ fontWeight: 700 }}>TecnoInnova</span>
-            <span className="label-caps text-on-surface-variant">SIT · Seguridad Electrónica</span>
-          </div>
+        <div className="auth-brand">
+          <img src="/tecnoinnova-logo.png" alt="TecnoInnova" />
+          <span className="headline-md text-on-surface" style={{ fontWeight: 700 }}>TecnoInnova</span>
+          <span className="label-caps text-on-surface-variant">SIT · Seguridad Electrónica</span>
         </div>
 
         {phase === 'loading' && (
           <>
-            <h1 className="headline-md text-on-surface" style={{ fontWeight: 700 }}>Verificando invitación</h1>
-            <p className="body-md text-on-surface-variant" style={{ marginTop: '12px' }}>
+            <h1 className="headline-md text-on-surface" style={{ fontWeight: 700, textAlign: 'center' }}>Verificando invitación</h1>
+            <p className="body-md text-on-surface-variant" style={{ marginTop: '12px', textAlign: 'center' }}>
               Validando tu enlace de activación...
             </p>
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
@@ -148,9 +145,9 @@ export default function Activacion() {
 
         {phase === 'form' && (
           <>
-            <h1 className="headline-md text-on-surface" style={{ fontWeight: 700 }}>Activá tu cuenta</h1>
+            <h1 className="headline-md text-on-surface" style={{ fontWeight: 700 }}>Activa tu cuenta</h1>
             <p className="body-md text-on-surface-variant" style={{ marginTop: '4px', marginBottom: '20px' }}>
-              Definí tu contraseña de acceso al SIT. Debe cumplir los requisitos de seguridad.
+              Define tu contraseña de acceso al SIT.
             </p>
 
             <form onSubmit={handleSubmit} noValidate>
@@ -218,7 +215,7 @@ export default function Activacion() {
             <span className="material-symbols-outlined" style={{ fontSize: '56px', color: 'var(--success)' }}>verified</span>
             <h1 className="headline-md text-on-surface" style={{ fontWeight: 700, marginTop: '8px' }}>¡Cuenta activada!</h1>
             <p className="body-md text-on-surface-variant" style={{ marginTop: '8px' }}>
-              Tu contraseña quedó configurada. Ya podés ingresar al sistema.
+              Tu contraseña quedó configurada. Ya puedes ingresar al sistema.
             </p>
             <Link to="/" className="btn btn-primary auth-submit" style={{ marginTop: '20px' }}>Ir al panel de control</Link>
           </>

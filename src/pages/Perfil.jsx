@@ -88,7 +88,7 @@ export default function Perfil() {
     }
 
     // Teléfono: si se ingresó algo, debe ser un teléfono venezolano válido (+58).
-    let phoneFinal = telefono
+    let phoneFinal
     if (telefono && telefono.trim() !== '') {
       const check = normalizeVzPhone(telefono)
       if (!check.ok) {
@@ -148,7 +148,6 @@ export default function Perfil() {
     <div>
       <div style={{ marginBottom: 'var(--stack-lg)' }}>
         <h1 className="display-lg text-on-surface">Mi Perfil</h1>
-        <p className="body-md text-on-surface-variant">Consultá y actualizá tus datos personales, foto de perfil y contraseña.</p>
       </div>
 
       <section className="grid-2" style={{ alignItems: 'start' }}>
@@ -157,7 +156,6 @@ export default function Perfil() {
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Información general</h2>
-              <span className="body-sm text-on-surface-variant">Foto, nombres y datos de contacto</span>
             </div>
           </div>
 
@@ -219,7 +217,6 @@ export default function Perfil() {
             <div className="card-header-in">
               <div>
                 <h2 className="headline-md text-on-surface">Datos de la cuenta</h2>
-                <span className="body-sm text-on-surface-variant">Información registrada del usuario</span>
               </div>
             </div>
             <dl className="kv-list">
@@ -253,7 +250,7 @@ export default function Perfil() {
             </div>
             <div className="form-group">
               <label>Confirmar nueva contraseña</label>
-              <input className="form-input" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repetí la nueva contraseña" autoComplete="new-password" />
+              <input className="form-input" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repite la nueva contraseña" autoComplete="new-password" />
             </div>
 
             {nuevo && (

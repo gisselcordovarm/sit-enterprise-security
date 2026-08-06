@@ -136,7 +136,7 @@ export default function Instalacion() {
       clearSignature();
     } catch (err) {
       console.error('Error al guardar instalación:', err);
-      setErrorMsg('No se pudo guardar el reporte de instalación. Verificá la conexión e intentá de nuevo.');
+      setErrorMsg('No se pudo guardar el reporte de instalación. Verifica la conexión e intenta de nuevo.');
     } finally {
       setSaving(false);
     }
@@ -154,7 +154,6 @@ export default function Instalacion() {
       <div style={{ marginBottom: 'var(--stack-lg)', textAlign: 'center' }}>
         <span className="label-caps text-secondary">Portal Técnico Móvil</span>
         <h1 className="headline-lg text-on-surface" style={{ marginTop: '4px' }}>Instalación y Firma</h1>
-        <p className="body-sm text-on-surface-variant">Interfaz responsiva optimizada para operación en smartphones.</p>
       </div>
 
       <DataStatus loading={loading} liveError={liveError} />
@@ -195,7 +194,7 @@ export default function Instalacion() {
             <section className="card glass-panel" style={{ background: 'var(--glass-bg)', textAlign: 'center', padding: '32px' }}>
               <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '48px' }}>check_circle</span>
               <h2 className="headline-md text-on-surface" style={{ marginTop: '12px' }}>Sin órdenes de instalación pendientes</h2>
-              <p className="body-sm text-on-surface-variant">Las órdenes asignadas aparecerán aquí para completar el parte técnico y la firma digital.</p>
+              <p className="body-sm text-on-surface-variant">Las órdenes asignadas aparecerán aquí.</p>
             </section>
           ) : (
             <div>

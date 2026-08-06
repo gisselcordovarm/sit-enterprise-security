@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
-import { modulesFor } from '../../lib/roles';
+import { modulesFor, canAccess } from '../../lib/roles';
 import { useState, useEffect } from 'react';
 
 export default function Sidebar({ hidden = false }) {
@@ -8,7 +8,7 @@ export default function Sidebar({ hidden = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const navItems = modulesFor(rol);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -29,14 +29,16 @@ export default function Sidebar({ hidden = false }) {
             <span className="label-caps text-on-surface-variant">Enterprise SIT</span>
           </div>
         </div>
-        <button
-          className="sidebar-new-request"
-          aria-label="Nueva solicitud"
-          onClick={() => navigate('/pedidos')}
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-          <span className="btn-text">Nueva solicitud</span>
-        </button>
+        {canAccess(rol, 'pedidos') && (
+          <button
+            className="sidebar-new-request"
+            aria-label="Nueva solicitud"
+            onClick={() => navigate('/pedidos')}
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+            <span className="btn-text">Nueva solicitud</span>
+          </button>
+        )}
       </div>
 
       <nav className="sidebar-menu" role="navigation" aria-label="Navegación principal">

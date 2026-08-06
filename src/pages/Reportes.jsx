@@ -106,7 +106,7 @@ export default function Reportes() {
       setNota(okMsg)
     } catch (err) {
       console.error(err)
-      setNota('No se pudo generar el archivo. Verificá la conexión.')
+      setNota('No se pudo generar el archivo. Verifica la conexión.')
     } finally {
       setExportando('')
     }
@@ -137,7 +137,6 @@ export default function Reportes() {
     <div>
       <div style={{ marginBottom: 'var(--stack-lg)' }}>
         <h1 className="display-lg text-on-surface">Reportes del Sistema</h1>
-        <p className="body-md text-on-surface-variant">Consultas SQL en pantalla y generación de reportes en PDF, Excel y CSV.</p>
       </div>
 
       <DataStatus loading={loading} liveError={liveError} />
@@ -270,7 +269,6 @@ export default function Reportes() {
         <div className="card-header-border">
           <div>
             <h2 className="headline-md text-on-surface">Impresión de Facturas (.PDF)</h2>
-            <span className="body-sm text-on-surface-variant">Documentos emitidos listos para impresión</span>
           </div>
           <span className="badge badge-info">{facturas.length} facturas</span>
         </div>
@@ -307,7 +305,6 @@ export default function Reportes() {
         <div className="card-header-border" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className="headline-md text-on-surface">Consultas SQL usadas en los reportes</h2>
-            <span className="body-sm text-on-surface-variant">Mostradas en pantalla e incluidas en el PDF de memoria.</span>
           </div>
           <button className="btn btn-primary" onClick={exportMemoriaSql} disabled={!!exportando}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>

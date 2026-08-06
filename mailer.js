@@ -27,8 +27,8 @@ export function activationEmail({ link, name }) {
   const subject = 'Tu invitación al SIT · TecnoInnova'
   const text =
     `Hola ${name || 'usuario'}, te invitaron al sistema SIT (Seguridad Electrónica).\n\n` +
-    `Activá tu cuenta definiendo tu contraseña con este enlace (válido por 24 horas):\n${link}\n\n` +
-    `Si el botón no funciona, copiá y pegá el enlace en el navegador.\n\n` +
+    `Activa tu cuenta definiendo tu contraseña con este enlace (válido por 24 horas):\n${link}\n\n` +
+    `Si el botón no funciona, copia y pega el enlace en el navegador.\n\n` +
     `Saludos,\nEquipo TecnoInnova`
   const html =
     `<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif">` +
@@ -37,11 +37,11 @@ export function activationEmail({ link, name }) {
     `<div style="font-size:18px;font-weight:700;color:#102a43">SIT · TecnoInnova</div>` +
     `<div style="font-size:12px;color:#5b7b9a;margin-bottom:20px">Seguridad Electrónica</div>` +
     `<p style="color:#102a43;font-size:15px;line-height:1.5">Hola <b>${userName}</b>, te invitaron a usar el sistema SIT (Seguridad Electrónica).</p>` +
-    `<p style="color:#102a43;font-size:15px;line-height:1.5">Activá tu cuenta definiendo tu contraseña de acceso:</p>` +
+    `<p style="color:#102a43;font-size:15px;line-height:1.5">Activa tu cuenta definiendo tu contraseña de acceso:</p>` +
     `<div style="text-align:center;margin:24px 0">` +
     `<a href="${link}" style="display:inline-block;background:#1565c0;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:8px">Activar mi cuenta</a>` +
     `</div>` +
-    `<p style="color:#5b7b9a;font-size:12px;line-height:1.5">Este enlace es válido por 24 horas. Si el botón no funciona, copiá y pegá esta dirección en tu navegador:<br/><span style="word-break:break-all;color:#1565c0">${link}</span></p>` +
+    `<p style="color:#5b7b9a;font-size:12px;line-height:1.5">Este enlace es válido por 24 horas. Si el botón no funciona, copia y pega esta dirección en tu navegador:<br/><span style="word-break:break-all;color:#1565c0">${link}</span></p>` +
     `<p style="color:#5b7b9a;font-size:12px;margin-top:20px">Saludos,<br/>Equipo TecnoInnova</p>` +
     `</div></div></body></html>`
   return { subject, text, html }

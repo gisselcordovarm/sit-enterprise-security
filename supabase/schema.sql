@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS tareas (
   estado              VARCHAR(30) NOT NULL DEFAULT 'Pendiente',
   id_tecnico          BIGINT REFERENCES tecnicos(id_tecnico),
   id_pedido           BIGINT REFERENCES pedidos(id_pedido),
+  id_mantenimiento    BIGINT REFERENCES mantenimientos(id_mantenimiento),
   fecha_asignacion    TIMESTAMPTZ,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -142,6 +143,11 @@ CREATE TABLE IF NOT EXISTS facturas (
   monto_total         NUMERIC(14,2) NOT NULL DEFAULT 0,
   rif                 VARCHAR(30),
   estado_pago         VARCHAR(30) NOT NULL DEFAULT 'Pendiente',
+  -- Multimoneda: tasa BCV del día de emisión + IGTF 3% (cumplimiento fiscal VE).
+  tasa_bcv            NUMERIC(14,4),
+  monto_bs            NUMERIC(18,2),
+  igtf_usd            NUMERIC(14,2) NOT NULL DEFAULT 0,
+  igtf_bs             NUMERIC(18,2) NOT NULL DEFAULT 0,
   factura_pdf         TEXT,
   registro_contable   TEXT,
   comprobante_pago    TEXT,
@@ -193,6 +199,24 @@ CREATE TABLE IF NOT EXISTS encuestas (
   tipo_cliente        VARCHAR(20),
   comentarios         TEXT,
   fecha_contacto      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Planes de mantenimiento preventivo (calendario semestral automático).
+CREATE TABLE IF NOT EXISTS mantenimientos (
+  id_mantenimiento   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_pedido          BIGINT REFERENCES pedidos(id_pedido),
+  cliente_nombre     VARCHAR(200) NOT NULL,
+  zona_geografica    VARCHAR(30),
+  servicio           VARCHAR(200),
+  tipo_visita        VARCHAR(100) NOT NULL,
+  tareas             TEXT,
+  frecuencia_meses   INT NOT NULL DEFAULT 6 CHECK (frecuencia_meses > 0),
+  fecha_programada   DATE NOT NULL,
+  ultima_visita      DATE,
+  estado             VARCHAR(30) NOT NULL DEFAULT 'Programado',
+  id_tecnico         BIGINT REFERENCES tecnicos(id_tecnico),
+  notificado         BOOLEAN NOT NULL DEFAULT false,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- =============================================================================
@@ -298,9 +322,38 @@ CREATE OR REPLACE TRIGGER trg_recalcular_pedido
 AFTER INSERT OR UPDATE ON pedidos
 FOR EACH ROW EXECUTE FUNCTION fn_recalcular_trigger();
 
+-- Todo pedido aprobado y pendiente genera automáticamente su orden de despacho
+-- (aparece en Operaciones > Servicios Pendientes de Despacho).
+CREATE OR REPLACE FUNCTION fn_pedido_a_tarea() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_estado  text;
+  v_feat    boolean;
+BEGIN
+  -- Recalcula factibilidad/estado primero (cubre inserts sin líneas o reorden de triggers).
+  PERFORM fn_recalcular_pedido(NEW.id_pedido);
+  SELECT estado, factibilidad_ok INTO v_estado, v_feat
+    FROM public.pedidos WHERE id_pedido = NEW.id_pedido;
+
+  IF v_estado = 'Pendiente' AND v_feat
+     AND NOT EXISTS (SELECT 1 FROM public.tareas WHERE id_pedido = NEW.id_pedido) THEN
+    INSERT INTO public.tareas (cliente_nombre, zona_geografica, servicio, estado, id_pedido)
+    VALUES (NEW.cliente_nombre, NEW.zona_geografica, NEW.tipo_servicio, 'Pendiente', NEW.id_pedido);
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE OR REPLACE TRIGGER trg_pedido_a_tarea
+AFTER INSERT OR UPDATE ON pedidos
+FOR EACH ROW EXECUTE FUNCTION fn_pedido_a_tarea();
+
 -- Cierre de instalación: estado Instalado + disparo_7_dias (calidad T+7)
+-- + agenda automática del mantenimiento preventivo semestral (CRM Postventa).
 CREATE OR REPLACE FUNCTION fn_instalacion_completada() RETURNS trigger
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
 BEGIN
   IF NEW.estado = 'Completada' AND (TG_OP = 'INSERT' OR OLD.estado IS DISTINCT FROM 'Completada') THEN
     UPDATE pedidos SET estado = 'Instalado' WHERE id_pedido = NEW.id_pedido;
@@ -308,6 +361,19 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM seguimiento_postventa WHERE id_pedido = NEW.id_pedido) THEN
       INSERT INTO seguimiento_postventa (id_pedido, disparo_7_dias, estado)
       VALUES (NEW.id_pedido, COALESCE(NEW.fecha_ejecucion, now()) + interval '7 days', 'Pendiente');
+    END IF;
+
+    -- Mantenimiento preventivo automático: próxima revisión a los 6 meses.
+    IF NOT EXISTS (SELECT 1 FROM mantenimientos WHERE id_pedido = NEW.id_pedido) THEN
+      INSERT INTO mantenimientos (id_pedido, cliente_nombre, zona_geografica, servicio, tipo_visita, tareas, frecuencia_meses, fecha_programada, estado)
+      SELECT p.id_pedido, p.cliente_nombre, p.zona_geografica, p.tipo_servicio,
+             'Revisión Integral Semestral',
+             'Cambio de baterías de respaldo; limpieza de lentes de cámaras; prueba de sirena.',
+             6,
+             (COALESCE(NEW.fecha_ejecucion, now()))::date + interval '6 months',
+             'Programado'
+      FROM pedidos p
+      WHERE p.id_pedido = NEW.id_pedido;
     END IF;
   END IF;
   RETURN NEW;
@@ -392,8 +458,12 @@ LIMIT 10;
 -- su sesión se gestiona con Supabase Auth). La clave pública `anon` NO tiene
 -- permisos sobre las tablas de negocio.
 -- Enforcement por rol a nivel de base de datos, vinculado a profiles(rol):
---   - admin  -> lectura y escritura completa en las tablas de negocio.
---   - basico -> solo lectura (SELECT) en las tablas de negocio.
+--   - admin    -> lectura y escritura completa en las tablas de negocio.
+--   - vendedor -> escritura sobre pedidos / clientes / detalle_pedido.
+--   - logistica-> escritura sobre tareas / tecnicos / inventario / pedidos.
+--   - tecnico  -> escritura sobre instalaciones / detalle_materiales.
+--   - soporte  -> escritura sobre incidencias / encuestas / seguimiento_postventa.
+--   - basico   -> solo lectura en las tablas de negocio (todas).
 -- La capa de aplicación también limita por rol (RequireRole), pero RLS impide
 -- que un usuario autenticado cualquiera realice escrituras usando la clave
 -- anónima, sin depender únicamente de la guardia del cliente.
@@ -405,7 +475,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email      TEXT NOT NULL UNIQUE,
   nombre     TEXT,
-  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
+  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte')),
   activo     BOOLEAN NOT NULL DEFAULT true,
   estado     TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('pendiente', 'activo', 'inactivo')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -456,6 +526,111 @@ BEGIN
   END LOOP;
 END $$;
 
+-- ¿El usuario autenticado tiene el rol dado y su cuenta está activa?
+CREATE OR REPLACE FUNCTION public.has_rol(p_rol text) RETURNS boolean
+LANGUAGE sql STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND rol = p_rol AND activo AND estado = 'activo'
+  );
+$$;
+
+-- Escritura por rol operativo sobre las tablas de su dominio. Cada política es
+-- FOR ALL y se combina con OR con las del admin; así un rol operativo solo
+-- escribe donde le corresponde y el resto de tablas quedan en solo lectura.
+-- VENDEDOR: pedidos, clientes y detalle_pedido.
+DROP POLICY IF EXISTS "vendedor_write_pedidos" ON pedidos;
+CREATE POLICY "vendedor_write_pedidos" ON pedidos
+  FOR ALL TO authenticated
+  USING (public.has_rol('vendedor'))
+  WITH CHECK (public.has_rol('vendedor'));
+
+DROP POLICY IF EXISTS "vendedor_write_clientes" ON clientes;
+CREATE POLICY "vendedor_write_clientes" ON clientes
+  FOR ALL TO authenticated
+  USING (public.has_rol('vendedor'))
+  WITH CHECK (public.has_rol('vendedor'));
+
+DROP POLICY IF EXISTS "vendedor_write_detalle_pedido" ON detalle_pedido;
+CREATE POLICY "vendedor_write_detalle_pedido" ON detalle_pedido
+  FOR ALL TO authenticated
+  USING (public.has_rol('vendedor'))
+  WITH CHECK (public.has_rol('vendedor'));
+
+-- LOGISTICA: tareas, tecnicos, inventario y pedidos.
+DROP POLICY IF EXISTS "logistica_write_tareas" ON tareas;
+CREATE POLICY "logistica_write_tareas" ON tareas
+  FOR ALL TO authenticated
+  USING (public.has_rol('logistica'))
+  WITH CHECK (public.has_rol('logistica'));
+
+DROP POLICY IF EXISTS "logistica_write_tecnicos" ON tecnicos;
+CREATE POLICY "logistica_write_tecnicos" ON tecnicos
+  FOR ALL TO authenticated
+  USING (public.has_rol('logistica'))
+  WITH CHECK (public.has_rol('logistica'));
+
+DROP POLICY IF EXISTS "logistica_write_inventario" ON inventario;
+CREATE POLICY "logistica_write_inventario" ON inventario
+  FOR ALL TO authenticated
+  USING (public.has_rol('logistica'))
+  WITH CHECK (public.has_rol('logistica'));
+
+DROP POLICY IF EXISTS "logistica_write_pedidos" ON pedidos;
+CREATE POLICY "logistica_write_pedidos" ON pedidos
+  FOR ALL TO authenticated
+  USING (public.has_rol('logistica'))
+  WITH CHECK (public.has_rol('logistica'));
+
+-- TECNICO: instalaciones y detalle_materiales.
+DROP POLICY IF EXISTS "tecnico_write_instalaciones" ON instalaciones;
+CREATE POLICY "tecnico_write_instalaciones" ON instalaciones
+  FOR ALL TO authenticated
+  USING (public.has_rol('tecnico'))
+  WITH CHECK (public.has_rol('tecnico'));
+
+DROP POLICY IF EXISTS "tecnico_write_detalle_materiales" ON detalle_materiales;
+CREATE POLICY "tecnico_write_detalle_materiales" ON detalle_materiales
+  FOR ALL TO authenticated
+  USING (public.has_rol('tecnico'))
+  WITH CHECK (public.has_rol('tecnico'));
+
+-- SOPORTE: incidencias, encuestas y seguimiento_postventa.
+DROP POLICY IF EXISTS "soporte_write_incidencias" ON incidencias;
+CREATE POLICY "soporte_write_incidencias" ON incidencias
+  FOR ALL TO authenticated
+  USING (public.has_rol('soporte'))
+  WITH CHECK (public.has_rol('soporte'));
+
+DROP POLICY IF EXISTS "soporte_write_encuestas" ON encuestas;
+CREATE POLICY "soporte_write_encuestas" ON encuestas
+  FOR ALL TO authenticated
+  USING (public.has_rol('soporte'))
+  WITH CHECK (public.has_rol('soporte'));
+
+DROP POLICY IF EXISTS "soporte_write_seguimiento" ON seguimiento_postventa;
+CREATE POLICY "soporte_write_seguimiento" ON seguimiento_postventa
+  FOR ALL TO authenticated
+  USING (public.has_rol('soporte'))
+  WITH CHECK (public.has_rol('soporte'));
+
+-- SOPORTE: planes de mantenimiento preventivo + despacho de sus órdenes.
+DROP POLICY IF EXISTS "soporte_write_mantenimientos" ON mantenimientos;
+CREATE POLICY "soporte_write_mantenimientos" ON mantenimientos
+  FOR ALL TO authenticated
+  USING (public.has_rol('soporte'))
+  WITH CHECK (public.has_rol('soporte'));
+
+DROP POLICY IF EXISTS "soporte_write_tareas_mantenimiento" ON tareas;
+CREATE POLICY "soporte_write_tareas_mantenimiento" ON tareas
+  FOR ALL TO authenticated
+  USING (public.has_rol('soporte') AND id_mantenimiento IS NOT NULL)
+  WITH CHECK (public.has_rol('soporte') AND id_mantenimiento IS NOT NULL);
+
+GRANT EXECUTE ON FUNCTION public.has_rol(text) TO authenticated;
+
 -- Las vistas de lectura se conceden a `anon` y `authenticated` (datos agregados).
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON v_dashboard_kpis, v_metricas_semanales, v_facturables, v_alertas TO anon, authenticated;
@@ -497,11 +672,78 @@ INSERT INTO inventario (codigo_equipo, descripcion_equipo, stock_disponible, umb
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tecnicos (nombre_tecnico, especialidad, zona_geografica, disponibilidad, carga_trabajo) VALUES
+  -- Distrito Capital
   ('Ariel Ramírez', 'Instalación Cámaras', 'Distrito Capital', true, 2),
+  ('Valeria Acosta', 'Alarmas / CCT', 'Distrito Capital', true, 0),
+  -- Miranda
   ('Carlos Ortega', 'Alarmas / CCT', 'Miranda', true, 4),
+  ('Jorge Peña', 'Instalación Cámaras', 'Miranda', true, 0),
+  -- Carabobo
   ('Marcos Benítez', 'Redes / Cámaras IP', 'Carabobo', true, 1),
+  ('Daniela Rojas', 'Mantenimiento', 'Carabobo', true, 0),
+  -- Aragua
   ('Sofía Herrera', 'Mantenimiento', 'Aragua', true, 0),
-  ('Diego Torres', 'UPS / Energía', 'Zulia', true, 3)
+  ('Luis Zambrano', 'UPS / Energía', 'Aragua', true, 2),
+  -- Zulia
+  ('Diego Torres', 'UPS / Energía', 'Zulia', true, 3),
+  ('Kevin Pirela', 'Control de Acceso', 'Zulia', true, 0),
+  -- La Guaira
+  ('Pedro Salas', 'Instalación Cámaras', 'La Guaira', true, 1),
+  ('Renata Gil', 'Alarmas / CCT', 'La Guaira', true, 0),
+  -- Anzoátegui
+  ('Héctor Marcano', 'Redes / Cámaras IP', 'Anzoátegui', true, 1),
+  ('Yulimar Figuera', 'Mantenimiento', 'Anzoátegui', true, 0),
+  -- Lara
+  ('Andrés Giménez', 'UPS / Energía', 'Lara', true, 2),
+  ('María León', 'Control de Acceso', 'Lara', true, 0),
+  -- Bolívar
+  ('Ricardo Medina', 'Instalación Cámaras', 'Bolívar', true, 1),
+  ('Génesis Rondón', 'Alarmas / CCT', 'Bolívar', true, 0),
+  -- Monagas
+  ('Rafael Castro', 'Redes / Cámaras IP', 'Monagas', true, 1),
+  ('Adriana Velásquez', 'Mantenimiento', 'Monagas', true, 0),
+  -- Sucre
+  ('Miguel Cova', 'UPS / Energía', 'Sucre', true, 1),
+  ('Estefanía Guzmán', 'Control de Acceso', 'Sucre', true, 0),
+  -- Nueva Esparta
+  ('José Marcano', 'Instalación Cámaras', 'Nueva Esparta', true, 1),
+  ('Paola Vásquez', 'Alarmas / CCT', 'Nueva Esparta', true, 0),
+  -- Falcón
+  ('Fernando Chirinos', 'Redes / Cámaras IP', 'Falcón', true, 1),
+  ('Angélica Colina', 'Mantenimiento', 'Falcón', true, 0),
+  -- Táchira
+  ('Simón Contreras', 'UPS / Energía', 'Táchira', true, 1),
+  ('Katherine Mora', 'Control de Acceso', 'Táchira', true, 0),
+  -- Mérida
+  ('Gustavo Rangel', 'Instalación Cámaras', 'Mérida', true, 1),
+  ('Rossana Briceno', 'Alarmas / CCT', 'Mérida', true, 0),
+  -- Trujillo
+  ('Emilio Castillo', 'Redes / Cámaras IP', 'Trujillo', true, 1),
+  ('Verónica Linares', 'Mantenimiento', 'Trujillo', true, 0),
+  -- Barinas
+  ('Omar Briceño', 'UPS / Energía', 'Barinas', true, 1),
+  ('Andreina Fuentes', 'Control de Acceso', 'Barinas', true, 0),
+  -- Apure
+  ('Ismael Torrealba', 'Instalación Cámaras', 'Apure', true, 1),
+  ('Dayana López', 'Alarmas / CCT', 'Apure', true, 0),
+  -- Cojedes
+  ('César Camacho', 'Redes / Cámaras IP', 'Cojedes', true, 1),
+  ('Nataly Herrera', 'Mantenimiento', 'Cojedes', true, 0),
+  -- Guárico
+  ('Alejandro Pino', 'UPS / Energía', 'Guárico', true, 1),
+  ('Marielena Sosa', 'Control de Acceso', 'Guárico', true, 0),
+  -- Portuguesa
+  ('Jesús Quintana', 'Instalación Cámaras', 'Portuguesa', true, 1),
+  ('Lucía Araujo', 'Alarmas / CCT', 'Portuguesa', true, 0),
+  -- Yaracuy
+  ('Manuel Oropeza', 'Redes / Cámaras IP', 'Yaracuy', true, 1),
+  ('Sabrina Díaz', 'Mantenimiento', 'Yaracuy', true, 0),
+  -- Amazonas
+  ('Sergio Yanez', 'UPS / Energía', 'Amazonas', true, 1),
+  ('Rosmery Córdoba', 'Control de Acceso', 'Amazonas', true, 0),
+  -- Delta Amacuro
+  ('Eduardo Malave', 'Instalación Cámaras', 'Delta Amacuro', true, 1),
+  ('Keyla Rivas', 'Alarmas / CCT', 'Delta Amacuro', true, 0)
 ON CONFLICT DO NOTHING;
 
 -- Fechas relativas a CURRENT_DATE para que el dashboard semanal muestre datos.
@@ -591,7 +833,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data ->> 'nombre', NEW.email),
     CASE
       WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin'
-      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico') THEN NEW.raw_user_meta_data ->> 'rol'
+      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte') THEN NEW.raw_user_meta_data ->> 'rol'
       ELSE 'basico'
     END,
     CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'activo' ELSE 'pendiente' END

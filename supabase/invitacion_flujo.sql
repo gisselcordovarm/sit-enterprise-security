@@ -39,7 +39,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data ->> 'nombre', NEW.email),
     CASE
       WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin'
-      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico') THEN NEW.raw_user_meta_data ->> 'rol'
+      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte') THEN NEW.raw_user_meta_data ->> 'rol'
       ELSE 'basico'
     END,
     CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'activo' ELSE 'pendiente' END

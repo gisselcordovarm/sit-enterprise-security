@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import DataStatus from '../components/common/DataStatus'
 import { fetchProfiles, updateProfileRole, updateProfileState, inviteUser, resendInvite } from '../lib/data'
-import { ROL_LABELS, validateEmail } from '../lib/roles'
+import { ROL_LABELS, ROL_DESC, ROL_ORDER, validateEmail } from '../lib/roles'
 import { useAuth } from '../context/authContext'
 
 const ESTADO_BADGE = {
@@ -21,7 +21,7 @@ export default function Usuarios() {
 
   // Modal "Nuevo usuario"
   const [showNew, setShowNew] = useState(false)
-  const [form, setForm] = useState({ email: '', nombre: '', rol: 'basico' })
+  const [form, setForm] = useState({ email: '', nombre: '', rol: 'vendedor' })
   const [formError, setFormError] = useState('')
   const [inviting, setInviting] = useState(false)
 
@@ -50,10 +50,10 @@ export default function Usuarios() {
   const changeRole = async (id, rol) => {
     if (savingId) return
     if (id === profile?.id) {
-      setMsg(''); setMsgError('No podés cambiar tu propio rol. Además debe haber al menos otro administrador.')
+      setMsg(''); setMsgError('No puedes cambiar tu propio rol. Además debe haber al menos otro administrador.')
       return
     }
-    if (!window.confirm(`¿Deseás cambiar el rol de este usuario a "${ROL_LABELS[rol] || rol}"?`)) return
+    if (!window.confirm(`¿Deseas cambiar el rol de este usuario a "${ROL_LABELS[rol] || rol}"?`)) return
     setSavingId(id); setMsg(''); setMsgError('')
     try {
       await updateProfileRole(id, rol)
@@ -70,12 +70,12 @@ export default function Usuarios() {
   const toggleState = async (p) => {
     if (savingId) return
     if (p.id === profile?.id) {
-      setMsg(''); setMsgError('No podés desactivar tu propia cuenta.')
+      setMsg(''); setMsgError('No puedes desactivar tu propia cuenta.')
       return
     }
     const next = p.estado === 'activo' ? 'inactivo' : 'activo'
     const action = next === 'inactivo' ? 'desactivar' : 'activar'
-    if (!window.confirm(`¿Deseás ${action} a ${p.nombre || p.email}?`)) return
+    if (!window.confirm(`¿Deseas ${action} a ${p.nombre || p.email}?`)) return
     setSavingId(p.id); setMsg(''); setMsgError('')
     try {
       await updateProfileState(p.id, next)
@@ -123,7 +123,7 @@ export default function Usuarios() {
       const res = await inviteUser({ email: form.email.trim(), nombre: form.nombre.trim(), rol: form.rol })
       const invitedEmail = form.email.trim()
       setShowNew(false)
-      setForm({ email: '', nombre: '', rol: 'basico' })
+      setForm({ email: '', nombre: '', rol: 'vendedor' })
       if (res.link) {
         setInviteEmail(invitedEmail)
         setInviteLink(res.link)
@@ -149,10 +149,7 @@ export default function Usuarios() {
       <div style={{ marginBottom: 'var(--stack-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <h1 className="display-lg text-on-surface">Gestión de Usuarios</h1>
-          <p className="body-md text-on-surface-variant">
-            El alta de usuarios la inicia el administrador. El nuevo usuario recibe un correo con un enlace de activación
-            para definir su contraseña. Nadie puede registrarse por su cuenta.
-          </p>
+          <p className="body-sm text-on-surface-variant">El administrador registra los usuarios del sistema.</p>
         </div>
         <button className="btn btn-primary" onClick={() => { setFormError(''); setShowNew(true) }}>
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span> Nuevo usuario
@@ -207,7 +204,9 @@ export default function Usuarios() {
                         onChange={(e) => changeRole(p.id, e.target.value)}
                       >
                         <option value="admin">{ROL_LABELS.admin}</option>
-                        <option value="basico">{ROL_LABELS.basico}</option>
+                        {ROL_ORDER.map((r) => (
+                          <option key={r} value={r}>{ROL_LABELS[r]}</option>
+                        ))}
                       </select>
                     </td>
                     <td>
@@ -261,8 +260,7 @@ export default function Usuarios() {
             <form onSubmit={submitInvite} noValidate>
               <div className="modal-body">
                 <p className="body-sm text-on-surface-variant" style={{ marginBottom: '16px' }}>
-                  El sistema enviará un correo de activación al usuario. La cuenta queda <b>pendiente</b> hasta que defina su
-                  contraseña con el enlace (válido 24 h). El usuario no puede registrarse por su cuenta.
+                  Se enviará un correo de activación (válido 24 h). La cuenta queda <b>pendiente</b> hasta definir la contraseña.
                 </p>
                 <label className="auth-label" htmlFor="nu-email">Correo electrónico</label>
                 <input
@@ -295,8 +293,9 @@ export default function Usuarios() {
                   disabled={inviting}
                   style={{ width: '100%', padding: '12px 14px', fontSize: '14px' }}
                 >
-                  <option value="basico">{ROL_LABELS.basico} — acceso a lectura (Dashboard, Pedidos, Operaciones, Reportes)</option>
-                  <option value="admin">{ROL_LABELS.admin} — acceso total a todos los módulos</option>
+                  {ROL_ORDER.map((r) => (
+                    <option key={r} value={r}>{ROL_LABELS[r]} — {ROL_DESC[r]}</option>
+                  ))}
                 </select>
                 {formError && (
                   <div className="auth-error-banner" style={{ marginTop: '16px' }}>
@@ -327,8 +326,8 @@ export default function Usuarios() {
             </div>
             <div className="modal-body">
               <p className="body-sm text-on-surface-variant" style={{ marginBottom: '12px' }}>
-                Invitación para <b>{inviteEmail}</b>. {emailSent ? 'Se envió el correo de activación.' : 'El correo no pudo enviarse.'}{' '}
-                Copiá este enlace y reenvialo al usuario. Expira en 24 horas y reemplaza cualquier invitación anterior.
+                Invitación para <b>{inviteEmail}</b>. {emailSent ? 'Correo de activación enviado.' : 'El correo no pudo enviarse.'}{' '}
+                Copia el enlace y reenvíalo (expira en 24 h).
               </p>
               {linkError ? (
                 <div className="auth-error-banner"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span> {linkError}</div>

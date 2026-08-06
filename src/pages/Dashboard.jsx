@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataStatus from '../components/common/DataStatus';
-import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos, fetchMetricasRango } from '../lib/data';
+import Sparkline from '../components/common/Sparkline';
+import { fetchKpis, fetchAlertas, fetchMetricasSemanales, fetchEstadosPedidos, fetchMetricasRango, fetchDesgloseSemanal } from '../lib/data';
 import { formatMoney } from '../lib/format';
 
 const PERIODS = {
@@ -12,15 +13,38 @@ const PERIODS = {
 
 const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// Medidor semicircular de NPS (-100 a +100).
+function GaugeNPS({ value }) {
+  const cx = 100, cy = 100, r = 80;
+  const n = Number(value);
+  const f = Math.max(0, Math.min(1, (n + 100) / 200));
+  const rad = ((180 - f * 180) * Math.PI) / 180;
+  const ex = cx + r * Math.cos(rad);
+  const ey = cy - r * Math.sin(rad);
+  const color = n >= 50 ? 'var(--success)' : n >= 0 ? 'var(--primary)' : 'var(--error)';
+  return (
+    <svg viewBox="0 0 200 118" width="172" height="102" style={{ display: 'block', position: 'relative', zIndex: 10 }} aria-label={`Satisfacción NPS: ${n}`}>
+      <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} stroke="var(--surface-container-highest)" strokeWidth="14" fill="none" strokeLinecap="round" />
+      <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}`} stroke={color} strokeWidth="14" fill="none" strokeLinecap="round" />
+      <text x="100" y="95" textAnchor="middle" fill="var(--on-surface)" fontSize="30" fontWeight="700" fontFamily="var(--font-body)">{n}</text>
+      <text x="100" y="112" textAnchor="middle" fill="var(--on-surface-variant)" fontSize="9" fontWeight="700" letterSpacing="1.5" fontFamily="var(--font-body)">NPS</text>
+      <text x="16" y="102" textAnchor="middle" fill="var(--on-surface-variant)" fontSize="8" fontFamily="var(--font-mono)">-100</text>
+      <text x="184" y="102" textAnchor="middle" fill="var(--on-surface-variant)" fontSize="8" fontFamily="var(--font-mono)">+100</text>
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [selectedAlert, setSelectedAlert] = useState(null);
-  const [alertFilter, setAlertFilter] = useState('ALL');
+  const [alertFilter] = useState('ALL');
 
   const [kpis, setKpis] = useState({ pedidosTotales: 0, incidenciasAbiertas: 0, tecnicosActivos: 0, tecnicosTotales: 0, nps: 0 });
   const [alerts, setAlerts] = useState([]);
   const [semana, setSemana] = useState({ op: [], ing: [] });
   const [estados, setEstados] = useState([]);
+  const [desglose, setDesglose] = useState({});
+  const [hoverBar, setHoverBar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
 
@@ -32,13 +56,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchKpis(), fetchAlertas(), fetchMetricasSemanales(), fetchEstadosPedidos()])
-      .then(([kpiData, alertData, weekData, estadoData]) => {
+    Promise.all([fetchKpis(), fetchAlertas(), fetchMetricasSemanales(), fetchEstadosPedidos(), fetchDesgloseSemanal()])
+      .then(([kpiData, alertData, weekData, estadoData, desgData]) => {
         if (!active) return;
         setKpis(kpiData);
         setAlerts(alertData);
         setSemana(weekData);
         setEstados(estadoData);
+        setDesglose(desgData || {});
         setLiveError(null);
       })
       .catch(() => {
@@ -52,7 +77,7 @@ export default function Dashboard() {
 
   // Cuando el período es mes/año se consulta el rango real sobre pedidos.
   useEffect(() => {
-    if (period === 'week') { setRangeData(null); return; }
+    if (period === 'week') return;
     let active = true;
     setPeriodLoading(true);
     const now = new Date();
@@ -100,6 +125,7 @@ export default function Dashboard() {
     return rows.map((r) => ({
       label: r.label,
       value: r.value,
+      fecha: r.fecha,
       height: Math.max(20, Math.round((r.value / maxVal) * 230)),
     }));
   };
@@ -120,15 +146,21 @@ export default function Dashboard() {
 
   const activeSeries = period === 'week' ? semana : rangeData || { op: [], ing: [] };
   const chartData = buildChart(activeSeries.op);
+  const hoverItem = hoverBar !== null ? chartData[hoverBar] : null;
+  const hoverDesg = hoverItem?.fecha ? desglose[hoverItem.fecha] : null;
   const tendOp = seriesTrend(semana.op);
   const tendIng = seriesTrend(semana.ing);
   const ingresoSemana = semana.ing.reduce((s, r) => s + Number(r.value || 0), 0);
 
+  const sparkPedidos = semana.op.map((r) => Number(r.value || 0));
+  const sparkIngresos = semana.ing.map((r) => Number(r.value || 0));
+  const sparkColor = (t) => (t && t.up === true ? 'var(--success)' : t && t.up === false ? 'var(--error)' : 'var(--on-surface-variant)');
+
   const kpiCards = [
-    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: tendOp ? tendOp.label : 'Estable', trendUp: tendOp ? tendOp.up : null, blobBg: 'rgba(165, 216, 255, 0.5)' },
-    { title: 'Ingresos de la Semana', value: formatMoney(ingresoSemana), trend: tendIng ? tendIng.label : 'Estable', trendUp: tendIng ? tendIng.up : null, blobBg: 'rgba(131, 106, 157, 0.5)' },
-    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: 'En tiempo real', trendUp: null, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true },
-    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Calculado', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)' },
+    { title: 'Pedidos Totales', value: kpis.pedidosTotales.toLocaleString(), trend: tendOp ? tendOp.label : 'Estable', trendUp: tendOp ? tendOp.up : null, blobBg: 'rgba(165, 216, 255, 0.5)', spark: sparkPedidos, sparkColor: sparkColor(tendOp) },
+    { title: 'Ingresos de la Semana', value: formatMoney(ingresoSemana), trend: tendIng ? tendIng.label : 'Estable', trendUp: tendIng ? tendIng.up : null, blobBg: 'rgba(131, 106, 157, 0.5)', spark: sparkIngresos, sparkColor: sparkColor(tendIng) },
+    { title: 'Técnicos Activos', value: `${kpis.tecnicosActivos} / ${kpis.tecnicosTotales}`, trend: 'En tiempo real', trendUp: null, blobBg: 'rgba(78, 71, 207, 0.2)', isPrimary: true, live: true },
+    { title: 'Satisfacción NPS', value: String(kpis.nps), trend: 'Calculado', trendUp: null, blobBg: 'rgba(224, 226, 233, 0.5)', gauge: true },
   ];
 
   // Estado de operaciones derivado de datos reales (no hardcodeado).
@@ -144,7 +176,6 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 className="display-lg text-on-surface" style={{ marginBottom: '4px' }}>Resumen General</h1>
-            <p className="body-sm text-on-surface-variant">Métricas en tiempo real y estado de las operaciones</p>
           </div>
         </div>
       </header>
@@ -184,25 +215,37 @@ export default function Dashboard() {
                   }}
                 />
                 <p className="label-caps text-on-surface-variant" style={{ marginBottom: '8px', position: 'relative', zIndex: 10 }}>{kpi.title}</p>
-                <h3
-                  className="headline-lg"
-                  style={{
-                    color: kpi.isPrimary ? 'var(--primary)' : 'var(--on-surface)',
-                    position: 'relative',
-                    zIndex: 10,
-                  }}
-                >
-                  {kpi.value}
-                </h3>
+                {kpi.gauge ? (
+                  <GaugeNPS value={kpis.nps} />
+                ) : (
+                  <>
+                    <h3
+                      className="headline-lg"
+                      style={{
+                        color: kpi.isPrimary ? 'var(--primary)' : 'var(--on-surface)',
+                        position: 'relative',
+                        zIndex: 10,
+                      }}
+                    >
+                      {kpi.value}
+                    </h3>
+                    {kpi.spark && kpi.spark.length > 1 && (
+                      <div style={{ marginTop: '12px', position: 'relative', zIndex: 10 }}>
+                        <Sparkline data={kpi.spark} color={kpi.sparkColor} />
+                      </div>
+                    )}
+                  </>
+                )}
                 <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px', position: 'relative', zIndex: 10 }}>
+                  {kpi.live && <span className="kpi-live-dot" aria-hidden="true" />}
                   <span className="material-symbols-outlined" style={{
                     fontSize: '16px',
-                    color: kpi.trendUp === true ? 'var(--primary)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
+                    color: kpi.trendUp === true ? 'var(--success)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
                   }}>
                     {kpi.trendUp === true ? 'trending_up' : kpi.trendUp === false ? 'trending_down' : 'horizontal_rule'}
                   </span>
                   <span className="body-sm" style={{
-                    color: kpi.trendUp === true ? 'var(--primary)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
+                    color: kpi.trendUp === true ? 'var(--success)' : kpi.trendUp === false ? 'var(--error)' : 'var(--on-surface-variant)',
                   }}>
                     {kpi.trend}
                   </span>
@@ -273,6 +316,43 @@ export default function Dashboard() {
             </div>
             {/* Decorative gradient */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50%', background: 'linear-gradient(to top, rgba(78, 71, 207, 0.1), transparent)', zIndex: 0 }} />
+            {/* Tooltip */}
+            {hoverItem && (
+              <div
+                role="tooltip"
+                style={{
+                  position: 'absolute',
+                  left: `${((hoverBar + 0.5) / chartData.length) * 100}%`,
+                  bottom: '152px',
+                  transform: 'translateX(-50%)',
+                  minWidth: '210px',
+                  maxWidth: '270px',
+                  background: 'var(--surface-container-highest)',
+                  border: '1px solid var(--outline-variant)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+                  padding: '12px 14px',
+                  zIndex: 30,
+                  pointerEvents: 'none',
+                }}
+              >
+                <div className="label-caps" style={{ color: 'var(--primary)', marginBottom: '8px', fontSize: '10px' }}>
+                  {hoverItem.label} · {hoverItem.value} {hoverItem.value === 1 ? 'Actividad' : 'Actividades'}
+                </div>
+                {hoverDesg && Object.keys(hoverDesg).length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {Object.entries(hoverDesg).map(([tipo, n]) => (
+                      <div key={tipo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                        <span className="body-sm text-on-surface-variant" style={{ fontSize: '12px' }}>{tipo}</span>
+                        <span className="body-sm" style={{ fontWeight: '700', color: 'var(--on-surface)' }}>{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="body-sm text-on-surface-variant" style={{ fontSize: '12px' }}>Sin desglose disponible</span>
+                )}
+              </div>
+            )}
             {/* Bars */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', position: 'relative', zIndex: 10, marginTop: '16px', paddingBottom: '32px', borderBottom: '1px solid rgba(199, 196, 214, 0.3)', paddingLeft: '32px', paddingRight: '8px' }}>
               {chartData.length > 0 ? chartData.map((d, i) => (
@@ -281,27 +361,35 @@ export default function Dashboard() {
                   style={{
                     width: `${Math.max(30, 100 / chartData.length - 2)}%`,
                     height: `${d.height}px`,
-                    background: i === 3 ? 'linear-gradient(135deg, #6862e9, #4e47cf)' : 'var(--surface-container-highest)',
+                    background: hoverBar === i ? 'linear-gradient(135deg, #6862e9, #4e47cf)' : i === 3 ? 'linear-gradient(135deg, #6862e9, #4e47cf)' : 'var(--surface-container-highest)',
                     borderRadius: '9999px 9999px 0 0',
                     position: 'relative',
                     cursor: 'pointer',
-                    boxShadow: i === 3 ? '0 0 15px rgba(78, 71, 207, 0.4)' : 'none',
+                    boxShadow: i === 3 || hoverBar === i ? '0 0 15px rgba(78, 71, 207, 0.4)' : 'none',
                     transition: 'all 0.3s',
                   }}
-                  title={`${d.label}: ${d.value}`}
+                  onMouseEnter={() => setHoverBar(i)}
+                  onMouseLeave={() => setHoverBar(null)}
+                  onFocus={() => setHoverBar(i)}
+                  onBlur={() => setHoverBar(null)}
+                  role="img"
+                  aria-label={`${d.label}: ${d.value} ${d.value === 1 ? 'actividad' : 'actividades'}`}
+                  tabIndex={0}
                 >
-                  <span style={{
-                    position: 'absolute',
-                    top: '-32px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: '11px',
-                    fontWeight: i === 3 ? '700' : '400',
-                    color: i === 3 ? 'var(--primary)' : 'var(--on-surface-variant)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {d.label}: {d.value}
-                  </span>
+                  {hoverBar === i && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-32px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: 'var(--primary)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {d.label}: {d.value}
+                    </span>
+                  )}
                 </div>
               )) : (
                 <div style={{ width: '100%', textAlign: 'center', color: 'var(--on-surface-variant)' }}>

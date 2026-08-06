@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DataStatus from '../components/common/DataStatus';
+import MapaLogistica from '../components/maps/MapaLogistica';
 import {
   fetchInventario, reordenarEquipo,
   fetchTecnicos, fetchTareas, fetchAsignaciones, asignarTecnico,
@@ -15,6 +16,7 @@ export default function Operaciones() {
   const [operMessage, setOperMessage] = useState(null);
   const [busyReorder, setBusyReorder] = useState(null);
   const [busyAssign, setBusyAssign] = useState(null);
+  const [vista, setVista] = useState('lista'); // 'lista' | 'mapa'
 
   useEffect(() => {
     let active = true;
@@ -50,10 +52,10 @@ export default function Operaciones() {
             : item
         )
       );
-      setOperMessage({ type: 'success', text: `Reabastecimiento automático gatillado. Stock incrementado a ${result.stock} uds.` });
+      setOperMessage({ type: 'success', text: `Reabastecimiento automático disparado. Stock incrementado a ${result.stock} uds.` });
     } catch (err) {
       console.error(err);
-      setOperMessage({ type: 'error', text: 'No se pudo gatillar el reabastecimiento. Intente de nuevo.' });
+      setOperMessage({ type: 'error', text: 'No se pudo disparar el reabastecimiento. Intente de nuevo.' });
     } finally {
       setBusyReorder(null);
     }
@@ -87,9 +89,32 @@ export default function Operaciones() {
   return (
     <div>
       {/* Page Title */}
-      <div style={{ marginBottom: 'var(--stack-lg)' }}>
-        <h1 className="display-lg text-on-surface">Operaciones y Logística</h1>
-        <p className="body-md text-on-surface-variant">Supervisión de inventarios críticos y asignación inteligente de personal técnico.</p>
+      <div style={{ marginBottom: 'var(--stack-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
+        <div>
+          <h1 className="display-lg text-on-surface">Operaciones y Logística</h1>
+        </div>
+
+        {/* Conmutador Vista Lista / Mapa */}
+        <div className="seg-toggle" role="tablist" aria-label="Vista de operaciones">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === 'lista'}
+            className={`seg-btn ${vista === 'lista' ? 'active' : ''}`}
+            onClick={() => setVista('lista')}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>view_list</span> Lista
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === 'mapa'}
+            className={`seg-btn ${vista === 'mapa' ? 'active' : ''}`}
+            onClick={() => setVista('mapa')}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>map</span> Mapa interactivo
+          </button>
+        </div>
       </div>
 
       <DataStatus loading={loading} liveError={liveError} />
@@ -108,6 +133,20 @@ export default function Operaciones() {
         </div>
       )}
 
+      {vista === 'mapa' ? (
+        <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
+          <div className="card-header-border">
+            <div>
+              <h2 className="headline-md text-on-surface">Geolocalización y Ruteo Óptimo</h2>
+              <span className="body-sm text-on-surface-variant">
+                Ubicación de instalaciones, posición GPS de técnicos y ruta óptima (reduce costo de combustible y tiempo de traslado).
+              </span>
+            </div>
+          </div>
+          <MapaLogistica tecnicos={technicians} tareas={pendingTasks} onAsignar={handleAssignTask} />
+        </section>
+      ) : (
+      <>
       {/* Grid 2 Columns */}
       <div className="grid-2">
         {/* Inventory Monitor Panel */}
@@ -115,7 +154,6 @@ export default function Operaciones() {
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Control de Stock Crítico</h2>
-              <span className="body-sm text-on-surface-variant">Alertas de inventario y compras automáticas</span>
             </div>
           </div>
 
@@ -132,6 +170,9 @@ export default function Operaciones() {
               <tbody>
                 {inventory.map((item) => {
                   const isCritical = item.stock < item.minThreshold;
+                  const stockPct = item.minThreshold > 0
+                    ? Math.min(100, Math.round((item.stock / item.minThreshold) * 100))
+                    : 100;
                   return (
                     <tr key={item.id}>
                       <td>
@@ -139,12 +180,17 @@ export default function Operaciones() {
                         <span className="label-caps text-on-surface-variant" style={{ fontSize: '10px' }}>{item.id}</span>
                       </td>
                       <td>
-                        <span className="body-sm" style={{ fontWeight: 'bold', color: isCritical ? 'var(--error)' : 'var(--success)' }}>
-                          {item.stock} uds.
-                        </span>
-                        {isCritical && (
-                          <span className="badge badge-error" style={{ fontSize: '9px', marginLeft: '6px', padding: '2px 6px' }}>BAJO</span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="body-sm" style={{ fontWeight: 'bold', color: isCritical ? 'var(--error)' : 'var(--success)' }}>
+                            {item.stock} uds.
+                          </span>
+                          {isCritical && (
+                            <span className="badge badge-error" style={{ fontSize: '9px', padding: '2px 6px' }}>BAJO</span>
+                          )}
+                        </div>
+                        <div className="stock-bar" title={`Nivel: ${stockPct}% del mínimo`}>
+                          <div className={`stock-bar-fill ${isCritical ? 'stock-bar-fill--low' : ''}`} style={{ width: `${stockPct}%` }} />
+                        </div>
                       </td>
                       <td><span className="body-sm text-on-surface">{item.minThreshold} uds.</span></td>
                       <td>
@@ -179,7 +225,6 @@ export default function Operaciones() {
           <div className="card-header-border">
             <div>
               <h2 className="headline-md text-on-surface">Algoritmo de Ruteo Geográfico</h2>
-              <span className="body-sm text-on-surface-variant">Asignar según zona del cliente y menor carga laboral</span>
             </div>
           </div>
 
@@ -211,9 +256,12 @@ export default function Operaciones() {
                 <div key={t.id} style={{ flex: '1 1 140px', padding: '10px', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)' }}>
                   <span className="body-sm text-on-surface" style={{ fontWeight: 'bold', display: 'block' }}>{t.name}</span>
                   <span className="label-caps text-primary" style={{ fontSize: '10px', display: 'block' }}>Zona {t.zone}</span>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                     <span className="body-sm text-on-surface-variant">Tareas: {t.workload}</span>
-                    <span className="badge badge-success" style={{ fontSize: '9px', padding: '2px 4px' }}>{t.status}</span>
+                    <span className={`tech-status ${t.status === 'Activo' ? 'tech-status--on' : 'tech-status--off'}`}>
+                      <span className="tech-status-dot" />
+                      {t.status}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -266,6 +314,8 @@ export default function Operaciones() {
           </table>
         </div>
       </section>
+      </>
+      )}
     </div>
   );
 }

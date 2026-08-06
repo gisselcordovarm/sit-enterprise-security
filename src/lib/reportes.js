@@ -3,7 +3,7 @@
 // Generación en el cliente de: PDF (jsPDF), XLS (SpreadsheetML) y CSV.
 // =============================================================================
 import { jsPDF } from 'jspdf'
-import { formatMoney } from './format'
+import { formatMoney, formatBs } from './format'
 
 // ---- Descarga genérica -----------------------------------------------------
 function descargarBlob(nombre, blob) {
@@ -36,10 +36,7 @@ export function exportarXLSX(nombre, columnas, filas, opciones = {}) {
   const xml = (v) => String(v == null ? '' : v)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-  const {
-    colWidths = [],
-    moneda = [],
-  } = opciones
+  const { colWidths = [] } = opciones
 
   const widths = columnas.map((_, i) => {
     if (colWidths[i]) return colWidths[i]
@@ -63,7 +60,7 @@ export function exportarXLSX(nombre, columnas, filas, opciones = {}) {
   // Datos
   filas.forEach((f, ri) => {
     let r = '<Row>'
-    f.forEach((v, ci) => {
+    f.forEach((v) => {
       const num = typeof v === 'number' && !Number.isNaN(v)
       const sty = ri % 2 === 0 ? 'rowEven' : 'rowOdd'
       r += '<Cell ss:StyleID="' + sty + '"><Data ss:Type="' + (num ? 'Number' : 'String') + '">' + (num ? v : xml(v)) + '</Data></Cell>'
@@ -198,12 +195,59 @@ export function generarPdfFactura(inv) {
     doc.text(String(item), 20, y)
   })
 
+  // Multimoneda: tasa BCV + IGTF 3% (requisito fiscal venezolano).
+  const tasa = Number(inv.tasa_bcv) || null
+  const base = Number(inv.total) || 0
+  const igtfUsd = inv.igtf_usd != null ? Number(inv.igtf_usd) : (tasa ? base * 0.03 : 0)
+  const totalUsd = base + igtfUsd
+  const subtotalBs = tasa ? base * tasa : null
+  const igtfBs = inv.igtf_bs != null ? Number(inv.igtf_bs) : (tasa ? igtfUsd * tasa : null)
+  const totalBs = inv.monto_bs != null ? Number(inv.monto_bs) : (tasa ? totalUsd * tasa : null)
+
   doc.setDrawColor(150, 150, 150)
   doc.line(15, 140, 195, 140)
   doc.setFontSize(14)
   doc.setFont('Helvetica', 'bold')
-  doc.text('TOTAL FACTURADO:', 100, 155)
-  doc.text(formatMoney(inv.total), 150, 155)
+  doc.text('TOTAL FACTURADO (USD):', 100, 155)
+  doc.text(formatMoney(totalUsd), 190, 155, { align: 'right' })
+
+  // Recuadro de equivalencia en bolívares e IGTF.
+  doc.setFillColor(238, 240, 246)
+  doc.rect(15, 162, 180, 58, 'F')
+  doc.setDrawColor(150, 150, 150)
+  doc.rect(15, 162, 180, 58, 'S')
+
+  doc.setFont('Helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(11, 19, 38)
+  doc.text('EQUIVALENCIA MULTIMONEDA · BCV + IGTF (3%)', 20, 170)
+
+  doc.setFont('Helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(60, 60, 60)
+  if (tasa) {
+    doc.text(`Tasa BCV del día: Bs ${tasa.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} por USD 1,00`, 20, 177)
+    doc.text('Subtotal:', 20, 184)
+    doc.text(formatMoney(base), 145, 184, { align: 'right' })
+    doc.text(formatBs(subtotalBs), 190, 184, { align: 'right' })
+    doc.text('IGTF (3% s/ pago en divisas):', 20, 190)
+    doc.text(formatMoney(igtfUsd), 145, 190, { align: 'right' })
+    doc.text(formatBs(igtfBs), 190, 190, { align: 'right' })
+    doc.setFont('Helvetica', 'bold')
+    doc.text('Total con IGTF:', 20, 196)
+    doc.text(formatMoney(totalUsd), 145, 196, { align: 'right' })
+    doc.text(formatBs(totalBs), 190, 196, { align: 'right' })
+    doc.setFontSize(11)
+    doc.setTextColor(11, 19, 38)
+    doc.text(`TOTAL EN BOLÍVARES: ${formatBs(totalBs)}`, 20, 204)
+    doc.setFontSize(8)
+    doc.setTextColor(120, 120, 120)
+    doc.text('Moneda de presentación USD · Equivalente referencial según tasa oficial BCV.', 20, 210)
+  } else {
+    doc.text('Tasa BCV no disponible en esta emisión. Monto facturado solo en USD.', 20, 177)
+    doc.setFontSize(9)
+    doc.text('La tasa oficial del BCV se incorpora automáticamente cuando el servicio responde.', 20, 184)
+  }
 
   doc.save(`Factura-${inv.id}-${String(inv.cliente || '').replace(/\s+/g, '-')}.pdf`)
 }

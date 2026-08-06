@@ -53,6 +53,13 @@ async function resolveProfile(userId, email) {
 
 export default function AuthProvider({ children }) {
   const [state, setState] = useState({ user: null, profile: null, loading: true })
+  const [notice, setNotice] = useState(null)
+
+  // Mensaje de bloqueo según el estado del perfil (cuenta desactivada/pendiente).
+  const blockedMessage = (prof) =>
+    prof?.estado === 'pendiente'
+      ? 'Tu cuenta está pendiente de activación. Revisa el correo de invitación.'
+      : 'Tu cuenta fue desactivada. Contacta al administrador para reactivarla.'
 
   useEffect(() => {
     let active = true
@@ -76,7 +83,14 @@ export default function AuthProvider({ children }) {
 
       if (session?.user) {
         const prof = await resolveProfile(session.user.id, session.user.email)
-        if (active) setState({ user: session.user, profile: prof, loading: false })
+        if (prof && prof.estado !== 'activo') {
+          // Sesión restaurada de una cuenta desactivada/pendiente: se cierra y
+          // se muestra el motivo en la pantalla de login.
+          await supabase.auth.signOut()
+          if (active) { setNotice(blockedMessage(prof)); setState({ user: null, profile: null, loading: false }) }
+        } else {
+          if (active) setState({ user: session.user, profile: prof, loading: false })
+        }
       } else {
         setState({ user: null, profile: null, loading: false })
       }
@@ -85,6 +99,12 @@ export default function AuthProvider({ children }) {
         if (!active) return
         if (sessionData?.user) {
           const prof = await resolveProfile(sessionData.user.id, sessionData.user.email)
+          if (prof && prof.estado !== 'activo') {
+            await supabase.auth.signOut()
+            setNotice(blockedMessage(prof))
+            setState({ user: null, profile: null, loading: false })
+            return
+          }
           setState({ user: sessionData.user, profile: prof, loading: false })
         } else {
           setState({ user: null, profile: null, loading: false })
@@ -116,7 +136,7 @@ export default function AuthProvider({ children }) {
     // autenticación real y se devuelve el error de credenciales.
     if (error || !signData?.user) {
       if (!DEMO_FALLBACK_ENABLED) {
-        return error?.message || 'No se pudo autenticar. Verificá tus credenciales.'
+        return error?.message || 'No se pudo autenticar. Verifica tus credenciales.'
       }
       const profile = buildDemoProfile('demo', value)
       try { localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ email: value })) } catch { /* ignorar */ }
@@ -128,9 +148,8 @@ export default function AuthProvider({ children }) {
     // Las invitadas ('pendiente') y desactivadas ('inactivo') quedan bloqueadas.
     if (prof && prof.estado !== 'activo') {
       await supabase.auth.signOut()
-      return prof.estado === 'pendiente'
-        ? 'Tu cuenta está pendiente de activación. Revisá el correo de invitación.'
-        : 'Tu cuenta está desactivada. Contactá al administrador.'
+      setNotice(blockedMessage(prof))
+      return blockedMessage(prof)
     }
     setState({ user: signData.user, profile: prof, loading: false })
     return null
@@ -141,6 +160,8 @@ export default function AuthProvider({ children }) {
     try { localStorage.removeItem(DEMO_SESSION_KEY) } catch { /* ignorar */ }
     setState({ user: null, profile: null, loading: false })
   }, [])
+
+  const clearNotice = useCallback(() => setNotice(null), [])
 
   // Actualiza datos básicos del perfil (nombre, foto, teléfono, cargo).
   const updateProfile = useCallback(async (updates) => {
@@ -185,12 +206,14 @@ export default function AuthProvider({ children }) {
       ...state,
       rol: state.profile?.rol || null,
       isAdminView: state.profile?.rol === ROLES.ADMIN,
+      notice,
       signIn,
       signOut,
+      clearNotice,
       updateProfile,
       changePassword,
     }),
-    [state, signIn, signOut, updateProfile, changePassword],
+    [state, notice, signIn, signOut, clearNotice, updateProfile, changePassword],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

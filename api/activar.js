@@ -90,5 +90,5 @@ export default async function handler(req, res) {
   const metaLimpiado = { ...meta, inv_token: null, inv_exp: null }
   await admin.auth.admin.updateUserById(profile.id, { user_metadata: metaLimpiado })
 
-  return res.status(200).json({ ok: true, message: 'Cuenta activada. Ya podés iniciar sesión.' })
+  return res.status(200).json({ ok: true, message: 'Cuenta activada. Ya puedes iniciar sesión.' })
 }

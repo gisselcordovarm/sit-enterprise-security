@@ -6,6 +6,7 @@ import {
 } from '../lib/data';
 import { formatMoney } from '../lib/format';
 import { generarPdfFactura } from '../lib/reportes';
+import { getTasaBCV } from '../lib/multimoneda';
 
 export default function Finanzas() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -17,6 +18,8 @@ export default function Finanzas() {
   const [liveError, setLiveError] = useState(null);
   const [emailAlert, setEmailAlert] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
+  const [tasaInfo, setTasaInfo] = useState(null);
+  const [tasaLoading, setTasaLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -34,6 +37,16 @@ export default function Finanzas() {
       .finally(() => {
         if (active) setLoading(false);
       });
+    return () => { active = false; };
+  }, []);
+
+  // Tasa oficial BCV del día (cacheada 24 h en el navegador).
+  useEffect(() => {
+    let active = true;
+    getTasaBCV()
+      .then((t) => { if (active) setTasaInfo(t); })
+      .catch(() => {})
+      .finally(() => { if (active) setTasaLoading(false); });
     return () => { active = false; };
   }, []);
 
@@ -63,7 +76,7 @@ export default function Finanzas() {
       console.error('Error al generar factura:', e);
       setEmailAlert({
         type: 'error',
-        msg: `No se pudo generar la factura para ${facturable.cliente}. Verificá la base de datos e intentá de nuevo.`,
+        msg: `No se pudo generar la factura para ${facturable.cliente}. Verifica la base de datos e intenta de nuevo.`,
       });
     } finally {
       setGeneratingId(null);
@@ -110,7 +123,6 @@ export default function Finanzas() {
       {/* Page Title */}
       <div style={{ marginBottom: 'var(--stack-lg)' }}>
         <h1 className="display-lg text-on-surface">Administración y Finanzas</h1>
-        <p className="body-md text-on-surface-variant">Generación automática de facturas PDF, simulación de despacho por correo y libro contable digital.</p>
       </div>
 
       <DataStatus loading={loading} liveError={liveError} />
@@ -126,6 +138,35 @@ export default function Finanzas() {
           </button>
         </div>
       )}
+
+      {/* Tasa BCV oficial + IGTF */}
+      <section className="card glass-panel" style={{ background: 'var(--glass-bg)', marginBottom: 'var(--stack-lg)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>currency_exchange</span>
+              <h2 className="headline-md text-on-surface">Tasa BCV Oficial (USD/VES)</h2>
+              <span className={`badge ${tasaLoading ? 'badge-pending' : 'badge-success'}`}>
+                {tasaLoading ? 'Consultando...' : 'En vivo'}
+              </span>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            {tasaLoading ? (
+              <span className="label-caps text-on-surface-variant">Obteniendo tasa del BCV…</span>
+            ) : (
+              <>
+                <span className="display-lg text-success" style={{ display: 'block' }}>
+                  Bs {Number(tasaInfo?.tasa || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="label-caps text-on-surface-variant">
+                  {tasaInfo?.fecha} · {tasaInfo?.fuente}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="grid-2">
         {/* Pending Invoices for Generation */}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import DataStatus from '../components/common/DataStatus';
 import ZonaVe from '../components/common/ZonaVe';
-import { fetchPedidos, crearPedido, fetchInventario, defaultEquipoCodigo } from '../lib/data';
+import KanbanOrdenes from '../components/pedidos/KanbanOrdenes';
+import { fetchPedidos, crearPedido, fetchInventario, defaultEquipoCodigo, actualizarEstadoPedido, aplicarEstadoKanban } from '../lib/data';
 import { formatMoney } from '../lib/format';
 
 export default function Pedidos() {
@@ -9,6 +10,7 @@ export default function Pedidos() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [liveError, setLiveError] = useState(null);
+  const [vista, setVista] = useState('tabla');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -126,12 +128,27 @@ export default function Pedidos() {
     setSaving(false);
   };
 
+  // Mueve una tarjeta entre columnas del tablero Kanban (actualización optimista).
+  const handleMoveOrder = async (order, columna) => {
+    const next = aplicarEstadoKanban(order, columna);
+    setOrders((prev) => prev.map((o) => (o.id === order.id ? next : o)));
+    try {
+      const updated = await actualizarEstadoPedido(order.id, columna);
+      if (updated) {
+        setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, ...updated } : o)));
+      }
+    } catch (err) {
+      console.error(err);
+      setFormAlert({ type: 'error', msg: `No se pudo actualizar el estado del pedido ${order.id}.` });
+      try { setOrders(await fetchPedidos()); } catch { /* sin cambio */ }
+    }
+  };
+
   return (
     <div>
       {/* Page Title */}
       <div style={{ marginBottom: 'var(--stack-lg)' }}>
         <h1 className="display-lg text-on-surface">Pedidos e Ingresos</h1>
-        <p className="body-md text-on-surface-variant">Gestión de captación de órdenes por Web / Call Center y pre-evaluación algorítmica.</p>
       </div>
 
       <DataStatus loading={loading} liveError={liveError} />
@@ -239,7 +256,7 @@ export default function Pedidos() {
 
               {lineas.length === 0 && (
                 <p className="body-sm text-on-surface-variant" style={{ marginBottom: '10px', fontSize: '12px' }}>
-                  Sin líneas. Al validar se reservará el equipo sugerido para el servicio o podrá agregarlos manualmente.
+                  Sin líneas de pedido.
                 </p>
               )}
 
@@ -323,11 +340,36 @@ export default function Pedidos() {
 
         {/* Orders Listing status */}
         <section className="card glass-panel" style={{ background: 'var(--glass-bg)' }}>
-          <div className="card-header-border">
-            <h2 className="headline-md text-on-surface">Historial de Órdenes Evaluadas</h2>
-            <span className="badge badge-info">{orders.length} registros</span>
+          <div className="card-header-border" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <h2 className="headline-md text-on-surface">Historial de Órdenes Evaluadas</h2>
+              <span className="badge badge-info">{orders.length} registros</span>
+            </div>
+            <div className="seg-toggle" role="tablist" aria-label="Vista del historial">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={vista === 'tabla'}
+                className={`seg-btn ${vista === 'tabla' ? 'active' : ''}`}
+                onClick={() => setVista('tabla')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table</span> Tabla
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={vista === 'kanban'}
+                className={`seg-btn ${vista === 'kanban' ? 'active' : ''}`}
+                onClick={() => setVista('kanban')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>view_kanban</span> Kanban
+              </button>
+            </div>
           </div>
 
+          {vista === 'kanban' ? (
+            <KanbanOrdenes orders={orders} onMove={handleMoveOrder} />
+          ) : (
           <div className="table-container" style={{ maxHeight: '420px', overflowY: 'auto' }}>
             <table className="data-table">
               <thead>
@@ -357,7 +399,7 @@ export default function Pedidos() {
                       </span>
                     </td>
                     <td>
-                      <span className={`badge ${order.pagoStatus === 'Aprobado' ? 'badge-success' : 'badge-error'}`}>
+                      <span className={`badge ${order.pagoStatus === 'Aprobado' ? 'badge-success' : order.pagoStatus === 'Pendiente' ? 'badge-pending' : 'badge-error'}`}>
                         {order.pagoStatus}
                       </span>
                     </td>
@@ -382,6 +424,7 @@ export default function Pedidos() {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       </div>
     </div>

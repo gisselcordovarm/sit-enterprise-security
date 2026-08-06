@@ -1,31 +1,63 @@
 // =============================================================================
 // MODELO DE ROLES Y PERMISOS DEL SISTEMA (SIT Enterprise Security)
-// Dos niveles de acceso según el documento de especificación:
-//   - ADMIN  (Usuario Administrador): acceso total a todos los módulos.
-//   - BASICO (Usuario Básico)       : acceso a Pedidos y Operaciones.
+// Roles operativos según la especificación funcional:
+//   - ADMIN     (Administrador / Gerente)  : acceso total + Finanzas + Usuarios.
+//   - VENDEDOR  (Vendedor / Call Center)   : Pedidos y Dashboard.
+//   - LOGISTICA (Logística y Despacho)     : Operaciones (incl. Stock), Pedidos.
+//   - TECNICO   (Técnico de Campo)         : Instalación (portal de campo).
+//   - SOPORTE   (Soporte y Postventa)      : Postventa, Incidencias y NPS.
+//   - BASICO    (Usuario Básico, legado)   : solo lectura en módulos generales.
 // =============================================================================
 
 export const ROLES = {
   ADMIN: 'admin',
+  VENDEDOR: 'vendedor',
+  LOGISTICA: 'logistica',
+  TECNICO: 'tecnico',
+  SOPORTE: 'soporte',
   BASICO: 'basico',
 }
 
 export const ROL_LABELS = {
-  [ROLES.ADMIN]: 'Administrador',
+  [ROLES.ADMIN]: 'Administrador / Gerente',
+  [ROLES.VENDEDOR]: 'Vendedor / Call Center',
+  [ROLES.LOGISTICA]: 'Logística y Despacho',
+  [ROLES.TECNICO]: 'Técnico de Campo',
+  [ROLES.SOPORTE]: 'Soporte y Postventa',
   [ROLES.BASICO]: 'Usuario Básico',
 }
+
+// Descripción de cada rol (se usa en el selector de invitación).
+export const ROL_DESC = {
+  [ROLES.ADMIN]: 'Acceso total + Finanzas + Usuarios',
+  [ROLES.VENDEDOR]: 'Pedidos y Dashboard (Call Center)',
+  [ROLES.LOGISTICA]: 'Operaciones (Stock), Pedidos y Dashboard',
+  [ROLES.TECNICO]: 'Instalación (portal de campo) y Dashboard',
+  [ROLES.SOPORTE]: 'Postventa, Incidencias y NPS',
+  [ROLES.BASICO]: 'Lectura: Dashboard, Pedidos, Operaciones, Reportes',
+}
+
+// Orden de los roles en los selectores (gestión de usuarios).
+export const ROL_ORDER = [
+  ROLES.VENDEDOR,
+  ROLES.LOGISTICA,
+  ROLES.TECNICO,
+  ROLES.SOPORTE,
+  ROLES.BASICO,
+  ROLES.ADMIN,
+]
 
 export const ADMIN_EMAIL = 'admin@tecnoinnova.com'
 
 // Catálogo de módulos y qué roles pueden acceder.
 // La clave del módulo coincide con `path` para simplificar las guardias de ruta.
 export const MODULES = [
-  { key: 'dashboard',   path: '/',            label: 'Dashboard',   icon: 'dashboard',       roles: [ROLES.ADMIN, ROLES.BASICO] },
-  { key: 'pedidos',     path: '/pedidos',     label: 'Pedidos',     icon: 'shopping_cart',    roles: [ROLES.ADMIN, ROLES.BASICO] },
-  { key: 'operaciones', path: '/operaciones', label: 'Operaciones', icon: 'build',           roles: [ROLES.ADMIN, ROLES.BASICO] },
-  { key: 'instalacion', path: '/instalacion', label: 'Instalación', icon: 'settings',         roles: [ROLES.ADMIN] },
+  { key: 'dashboard',   path: '/',            label: 'Dashboard',   icon: 'dashboard',       roles: [ROLES.ADMIN, ROLES.BASICO, ROLES.VENDEDOR, ROLES.LOGISTICA, ROLES.TECNICO, ROLES.SOPORTE] },
+  { key: 'pedidos',     path: '/pedidos',     label: 'Pedidos',     icon: 'shopping_cart',    roles: [ROLES.ADMIN, ROLES.BASICO, ROLES.VENDEDOR, ROLES.LOGISTICA] },
+  { key: 'operaciones', path: '/operaciones', label: 'Operaciones', icon: 'build',           roles: [ROLES.ADMIN, ROLES.BASICO, ROLES.LOGISTICA] },
+  { key: 'instalacion', path: '/instalacion', label: 'Instalación', icon: 'settings',         roles: [ROLES.ADMIN, ROLES.TECNICO] },
   { key: 'finanzas',    path: '/finanzas',    label: 'Finanzas',    icon: 'payments',         roles: [ROLES.ADMIN] },
-  { key: 'postventa',   path: '/postventa',   label: 'Postventa',   icon: 'support_agent',    roles: [ROLES.ADMIN] },
+  { key: 'postventa',   path: '/postventa',   label: 'Postventa',   icon: 'support_agent',    roles: [ROLES.ADMIN, ROLES.SOPORTE] },
   { key: 'reportes',    path: '/reportes',    label: 'Reportes',    icon: 'summarize',         roles: [ROLES.ADMIN, ROLES.BASICO] },
   { key: 'usuarios',    path: '/usuarios',    label: 'Usuarios',    icon: 'manage_accounts', roles: [ROLES.ADMIN] },
 ]
@@ -52,7 +84,7 @@ export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 export function validateEmail(email) {
   const value = (email || '').trim()
   if (!value) return { ok: false, error: 'El correo es obligatorio.' }
-  if (!EMAIL_REGEX.test(value)) return { ok: false, error: 'Ingresá un correo válido, p. ej. usuario@dominio.com' }
+  if (!EMAIL_REGEX.test(value)) return { ok: false, error: 'Ingresa un correo válido, p. ej. usuario@dominio.com' }
   return { ok: true, error: '' }
 }
 

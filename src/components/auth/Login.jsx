@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/authContext'
-import { validateEmail, validatePassword, checkPasswordStrength, PASSWORD_RULES, ADMIN_EMAIL } from '../../lib/roles'
-import { DEMO_MODE, DEMO_FALLBACK_ENABLED } from '../../lib/supabase'
+import { validateEmail, validatePassword, checkPasswordStrength, PASSWORD_RULES } from '../../lib/roles'
 
 const STRENGTH_COLORS = ['var(--error)', 'var(--error)', 'var(--secondary)', 'var(--success)']
 
 export default function Login() {
-  const { user, loading, signIn } = useAuth()
+  const { user, loading, signIn, notice, clearNotice } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from || '/'
@@ -20,6 +19,9 @@ export default function Login() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Aviso de bloqueo (cuenta desactivada / pendiente) emitido por AuthProvider.
+  const displayError = formError || notice
+
   const strength = checkPasswordStrength(password)
   const strengthsMeta = { 0: 'Muy débil', 1: 'Débil', 2: 'Aceptable', 3: 'Segura' }
 
@@ -28,17 +30,20 @@ export default function Login() {
   const handleEmailChange = (e) => {
     setEmail(e.target.value)
     if (emailError) setEmailError('')
+    if (notice) clearNotice()
   }
 
   const handlePasswordChange = (e) => {
     const v = e.target.value
     setPassword(v)
     if (passError) setPassError('')
+    if (notice) clearNotice()
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setFormError('')
+    if (notice) clearNotice()
 
     const mailCheck = validateEmail(email)
     if (!mailCheck.ok) { setEmailError(mailCheck.error); return }
@@ -60,17 +65,15 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-bg" />
       <div className="auth-card glass-panel">
-        <div className="auth-logo">
-          <img src="/tecnoinnova-logo.png" alt="TecnoInnova" style={{ objectFit: 'contain' }} />
-          <div>
-            <span className="headline-md text-on-surface" style={{ fontWeight: 700 }}>TecnoInnova</span>
-            <span className="label-caps text-on-surface-variant">SIT · Seguridad Electrónica</span>
-          </div>
+        <div className="auth-brand">
+          <img src="/tecnoinnova-logo.png" alt="TecnoInnova" />
+          <span className="headline-md text-on-surface" style={{ fontWeight: 700 }}>TecnoInnova</span>
+          <span className="label-caps text-on-surface-variant">SIT · Seguridad Electrónica</span>
         </div>
 
-        <h1 className="headline-md text-on-surface" style={{ fontWeight: 700 }}>Iniciar sesión</h1>
-        <p className="body-md text-on-surface-variant" style={{ marginTop: '4px', marginBottom: '20px' }}>
-          Ingresá tus credenciales para acceder al panel de control.
+        <h1 className="headline-md text-on-surface" style={{ fontWeight: 700, textAlign: 'center' }}>Iniciar sesión</h1>
+        <p className="body-md text-on-surface-variant" style={{ marginTop: '4px', marginBottom: '20px', textAlign: 'center' }}>
+          Ingresa tus credenciales para acceder al panel de control.
         </p>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -142,23 +145,12 @@ export default function Login() {
           )}
 
           {/* Server error */}
-          {formError && <div className="auth-error-banner"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span> {formError}</div>}
+          {displayError && <div className="auth-error-banner"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span> {displayError}</div>}
 
           <button type="submit" className="btn btn-primary auth-submit" disabled={submitting}>
             {submitting ? 'Verificando...' : 'Ingresar al sistema'}
           </button>
         </form>
-
-        {DEMO_MODE || DEMO_FALLBACK_ENABLED ? (
-          <p className="auth-hint body-sm text-on-surface-variant">
-            Sesión demo — usá <b>{ADMIN_EMAIL}</b> con una contraseña segura
-            {DEMO_MODE ? ' (modo demo sin credenciales en Supabase)' : ''}. Creá el usuario administrador con <code>supabase/auth_admin.sql</code>.
-          </p>
-        ) : (
-          <p className="auth-hint body-sm text-on-surface-variant">
-            Usá una cuenta creada en Supabase Auth. Creá el administrador con <code>supabase/auth_admin.sql</code>.
-          </p>
-        )}
       </div>
     </div>
   )

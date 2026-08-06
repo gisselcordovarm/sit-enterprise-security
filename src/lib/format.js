@@ -16,6 +16,18 @@ export function formatMoney(value) {
   return veFormatter.format(n).replace(/\u00A0/g, ' ').trim()
 }
 
+// ---- Bolívares (VES): "Bs 1.234,56" -----------------------------------------
+const veNumberFormatter = new Intl.NumberFormat('es-VE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+export function formatBs(value) {
+  const n = Number(value)
+  if (Number.isNaN(n)) return 'Bs 0,00'
+  return `Bs ${veNumberFormatter.format(n).replace(/\u00A0/g, ' ').trim()}`
+}
+
 // =============================================================================
 // TELÉFONO DE VENEZUELA (+58)
 // Convención: +58 412 123-4567 (10 dígitos: 3 del código de área + 7 del número).

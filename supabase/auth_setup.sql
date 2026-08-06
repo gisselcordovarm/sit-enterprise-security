@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email      TEXT NOT NULL UNIQUE,
   nombre     TEXT,
-  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico')),
+  rol        TEXT NOT NULL DEFAULT 'basico' CHECK (rol IN ('admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte')),
   activo     BOOLEAN NOT NULL DEFAULT true,
   estado     TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('pendiente', 'activo', 'inactivo')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -34,9 +34,10 @@ AS $$
 $$;
 
 -- ---------- 3) Trigger: perfil automático al dar de alta un usuario ----------
--- El correo de administrador se eleva a rol 'admin'; el resto queda 'basico'
--- (o el rol que el admin definió al invitar, solo 'admin'/'basico'). Los
--- invitados inician en estado 'pendiente' (deben activarse con su contraseña).
+-- El correo de administrador se eleva a rol 'admin'; el resto adopta el rol
+-- operativo que el admin definió al invitar ('vendedor', 'logistica',
+-- 'tecnico', 'soporte', 'basico' o 'admin', siempre validado contra la lista).
+-- Los invitados inician en estado 'pendiente' (deben activarse con su contraseña).
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
@@ -50,7 +51,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data ->> 'nombre', NEW.email),
     CASE
       WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'admin'
-      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico') THEN NEW.raw_user_meta_data ->> 'rol'
+      WHEN NEW.raw_user_meta_data ->> 'rol' IN ('admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte') THEN NEW.raw_user_meta_data ->> 'rol'
       ELSE 'basico'
     END,
     CASE WHEN NEW.email = 'admin@tecnoinnova.com' THEN 'activo' ELSE 'pendiente' END

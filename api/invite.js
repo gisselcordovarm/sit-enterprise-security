@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   if (callerErr || !caller?.user) {
     console.error('[invite] auth getUser error:', callerErr?.status, callerErr?.message, 'url:', SUPABASE_URL)
     return res.status(401).json({
-      error: 'Sesión inválida. Volvé a iniciar sesión.',
+      error: 'Sesión inválida. Vuelve a iniciar sesión.',
       authError: callerErr?.message || 'usuario no encontrado',
       authStatus: callerErr?.status || null,
     })
@@ -89,13 +89,14 @@ export default async function handler(req, res) {
   const cleanEmail = String(email || '').trim().toLowerCase()
 
   if (!EMAIL_REGEX.test(cleanEmail)) {
-    return res.status(400).json({ error: 'Ingresá un correo válido.' })
+    return res.status(400).json({ error: 'Ingresa un correo válido.' })
   }
   if (action !== 'resend' && !String(nombre || '').trim()) {
     return res.status(400).json({ error: 'El nombre es obligatorio.' })
   }
-  if (action !== 'resend' && !['admin', 'basico'].includes(rol)) {
-    return res.status(400).json({ error: 'El rol debe ser "admin" o "basico".' })
+  const VALID_ROLES = ['admin', 'basico', 'vendedor', 'logistica', 'tecnico', 'soporte']
+  if (action !== 'resend' && !VALID_ROLES.includes(rol)) {
+    return res.status(400).json({ error: 'El rol debe ser uno válido: vendedor, logistica, tecnico, soporte, basico o admin.' })
   }
 
   try {
@@ -121,7 +122,7 @@ export default async function handler(req, res) {
         emailSent: mail.ok,
         message: mail.ok
           ? 'Invitación regenerada. Se envió el correo de activación.'
-          : 'Enlace de activación regenerado (válido 24 h). No se pudo enviar el correo: ' + (mail.error || 'revisá MAILTRAP_API_TOKEN'),
+          : 'Enlace de activación regenerado (válido 24 h). No se pudo enviar el correo: ' + (mail.error || 'revisa MAILTRAP_API_TOKEN'),
       })
     }
 
@@ -174,7 +175,7 @@ export default async function handler(req, res) {
       emailSent: mail.ok,
       message: mail.ok
         ? 'Invitación creada. Se envió el correo de activación.'
-        : 'Invitación creada. No se pudo enviar el correo: ' + (mail.error || 'revisá MAILTRAP_API_TOKEN') + '. Usá el enlace generado.',
+        : 'Invitación creada. No se pudo enviar el correo: ' + (mail.error || 'revisa MAILTRAP_API_TOKEN') + '. Usa el enlace generado.',
     })
   } catch (err) {
     return res.status(400).json(errBody(err))

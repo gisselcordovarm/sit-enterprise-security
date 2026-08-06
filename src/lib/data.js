@@ -1,5 +1,7 @@
 import { supabase, DEMO_MODE } from './supabase'
 import { formatMoney } from './format'
+import { tecnicoMasCercano, distanciaEntreZonas } from './geo'
+import { getTasaBCV, calcularIGTF } from './multimoneda'
 
 // =============================================================================
 // Utilidades de mapeo y formato
@@ -46,11 +48,78 @@ const demoInventario = [
 ]
 
 const demoTecnicos = [
+  // Distrito Capital
   { id: 'TECH-01', name: 'Ariel Ramírez', zone: 'Distrito Capital', workload: 2, status: 'Activo' },
-  { id: 'TECH-02', name: 'Carlos Ortega', zone: 'Miranda', workload: 4, status: 'Activo' },
-  { id: 'TECH-03', name: 'Marcos Benítez', zone: 'Carabobo', workload: 1, status: 'Activo' },
-  { id: 'TECH-04', name: 'Sofía Herrera', zone: 'Aragua', workload: 0, status: 'Activo' },
-  { id: 'TECH-05', name: 'Diego Torres', zone: 'Zulia', workload: 3, status: 'Activo' },
+  { id: 'TECH-02', name: 'Valeria Acosta', zone: 'Distrito Capital', workload: 0, status: 'Activo' },
+  // Miranda
+  { id: 'TECH-03', name: 'Carlos Ortega', zone: 'Miranda', workload: 4, status: 'Activo' },
+  { id: 'TECH-04', name: 'Jorge Peña', zone: 'Miranda', workload: 0, status: 'Activo' },
+  // Carabobo
+  { id: 'TECH-05', name: 'Marcos Benítez', zone: 'Carabobo', workload: 1, status: 'Activo' },
+  { id: 'TECH-06', name: 'Daniela Rojas', zone: 'Carabobo', workload: 0, status: 'Activo' },
+  // Aragua
+  { id: 'TECH-07', name: 'Sofía Herrera', zone: 'Aragua', workload: 0, status: 'Activo' },
+  { id: 'TECH-08', name: 'Luis Zambrano', zone: 'Aragua', workload: 2, status: 'Activo' },
+  // Zulia
+  { id: 'TECH-09', name: 'Diego Torres', zone: 'Zulia', workload: 3, status: 'Activo' },
+  { id: 'TECH-10', name: 'Kevin Pirela', zone: 'Zulia', workload: 0, status: 'Activo' },
+  // La Guaira
+  { id: 'TECH-11', name: 'Pedro Salas', zone: 'La Guaira', workload: 1, status: 'Activo' },
+  { id: 'TECH-12', name: 'Renata Gil', zone: 'La Guaira', workload: 0, status: 'Activo' },
+  // Anzoátegui
+  { id: 'TECH-13', name: 'Héctor Marcano', zone: 'Anzoátegui', workload: 1, status: 'Activo' },
+  { id: 'TECH-14', name: 'Yulimar Figuera', zone: 'Anzoátegui', workload: 0, status: 'Activo' },
+  // Lara
+  { id: 'TECH-15', name: 'Andrés Giménez', zone: 'Lara', workload: 2, status: 'Activo' },
+  { id: 'TECH-16', name: 'María León', zone: 'Lara', workload: 0, status: 'Activo' },
+  // Bolívar
+  { id: 'TECH-17', name: 'Ricardo Medina', zone: 'Bolívar', workload: 1, status: 'Activo' },
+  { id: 'TECH-18', name: 'Génesis Rondón', zone: 'Bolívar', workload: 0, status: 'Activo' },
+  // Monagas
+  { id: 'TECH-19', name: 'Rafael Castro', zone: 'Monagas', workload: 1, status: 'Activo' },
+  { id: 'TECH-20', name: 'Adriana Velásquez', zone: 'Monagas', workload: 0, status: 'Activo' },
+  // Sucre
+  { id: 'TECH-21', name: 'Miguel Cova', zone: 'Sucre', workload: 1, status: 'Activo' },
+  { id: 'TECH-22', name: 'Estefanía Guzmán', zone: 'Sucre', workload: 0, status: 'Activo' },
+  // Nueva Esparta
+  { id: 'TECH-23', name: 'José Marcano', zone: 'Nueva Esparta', workload: 1, status: 'Activo' },
+  { id: 'TECH-24', name: 'Paola Vásquez', zone: 'Nueva Esparta', workload: 0, status: 'Activo' },
+  // Falcón
+  { id: 'TECH-25', name: 'Fernando Chirinos', zone: 'Falcón', workload: 1, status: 'Activo' },
+  { id: 'TECH-26', name: 'Angélica Colina', zone: 'Falcón', workload: 0, status: 'Activo' },
+  // Táchira
+  { id: 'TECH-27', name: 'Simón Contreras', zone: 'Táchira', workload: 1, status: 'Activo' },
+  { id: 'TECH-28', name: 'Katherine Mora', zone: 'Táchira', workload: 0, status: 'Activo' },
+  // Mérida
+  { id: 'TECH-29', name: 'Gustavo Rangel', zone: 'Mérida', workload: 1, status: 'Activo' },
+  { id: 'TECH-30', name: 'Rossana Briceno', zone: 'Mérida', workload: 0, status: 'Activo' },
+  // Trujillo
+  { id: 'TECH-31', name: 'Emilio Castillo', zone: 'Trujillo', workload: 1, status: 'Activo' },
+  { id: 'TECH-32', name: 'Verónica Linares', zone: 'Trujillo', workload: 0, status: 'Activo' },
+  // Barinas
+  { id: 'TECH-33', name: 'Omar Briceño', zone: 'Barinas', workload: 1, status: 'Activo' },
+  { id: 'TECH-34', name: 'Andreina Fuentes', zone: 'Barinas', workload: 0, status: 'Activo' },
+  // Apure
+  { id: 'TECH-35', name: 'Ismael Torrealba', zone: 'Apure', workload: 1, status: 'Activo' },
+  { id: 'TECH-36', name: 'Dayana López', zone: 'Apure', workload: 0, status: 'Activo' },
+  // Cojedes
+  { id: 'TECH-37', name: 'César Camacho', zone: 'Cojedes', workload: 1, status: 'Activo' },
+  { id: 'TECH-38', name: 'Nataly Herrera', zone: 'Cojedes', workload: 0, status: 'Activo' },
+  // Guárico
+  { id: 'TECH-39', name: 'Alejandro Pino', zone: 'Guárico', workload: 1, status: 'Activo' },
+  { id: 'TECH-40', name: 'Marielena Sosa', zone: 'Guárico', workload: 0, status: 'Activo' },
+  // Portuguesa
+  { id: 'TECH-41', name: 'Jesús Quintana', zone: 'Portuguesa', workload: 1, status: 'Activo' },
+  { id: 'TECH-42', name: 'Lucía Araujo', zone: 'Portuguesa', workload: 0, status: 'Activo' },
+  // Yaracuy
+  { id: 'TECH-43', name: 'Manuel Oropeza', zone: 'Yaracuy', workload: 1, status: 'Activo' },
+  { id: 'TECH-44', name: 'Sabrina Díaz', zone: 'Yaracuy', workload: 0, status: 'Activo' },
+  // Amazonas
+  { id: 'TECH-45', name: 'Sergio Yanez', zone: 'Amazonas', workload: 1, status: 'Activo' },
+  { id: 'TECH-46', name: 'Rosmery Córdoba', zone: 'Amazonas', workload: 0, status: 'Activo' },
+  // Delta Amacuro
+  { id: 'TECH-47', name: 'Eduardo Malave', zone: 'Delta Amacuro', workload: 1, status: 'Activo' },
+  { id: 'TECH-48', name: 'Keyla Rivas', zone: 'Delta Amacuro', workload: 0, status: 'Activo' },
 ]
 
 const demoPendingTasks = [
@@ -69,8 +138,8 @@ const demoInstalaciones = [
 ]
 
 const demoFacturas = [
-  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, rif: 'V-19347823-3', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'] },
-  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, rif: 'J-30581262-3', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'] },
+  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, rif: 'V-19347823-3', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'], tasa_bcv: 36.5, igtf_usd: 10.5, igtf_bs: 383.25, monto_bs: 13156.5 },
+  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, rif: 'J-30581262-3', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'], tasa_bcv: 36.5, igtf_usd: 204, igtf_bs: 7446, monto_bs: 255646 },
 ]
 
 const demoLogs = [
@@ -165,7 +234,7 @@ const mapPedido = (r) => ({
   origen: r.origen,
   servicio: r.tipo_servicio,
   factibilidad: r.factibilidad_ok ? 'Aprobada' : 'Rechazada',
-  pagoStatus: r.pago_status === 'Aprobado' ? 'Aprobado' : 'Rechazado',
+  pagoStatus: r.pago_status === 'Aprobado' ? 'Aprobado' : r.pago_status === 'Pendiente' ? 'Pendiente' : 'Rechazado',
   flag_aprobado: r.flag_aprobado,
   total: Number(r.monto_total),
   fecha: r.fecha_pedido,
@@ -247,8 +316,8 @@ export async function crearPedido(payload) {
       .from('pedidos').select('*').eq('id_pedido', pedido.id_pedido).single()
     return mapPedido(fresh ?? pedido)
   } catch (e) {
-    console.warn('crearPedido fallback a demo:', e?.message || e)
-    return crearPedidoDemo(payload)
+    console.error('crearPedido:', e)
+    throw e
   }
 }
 
@@ -270,7 +339,94 @@ export function crearPedidoDemo(payload) {
     motivoFeat: status.motivoFeat,
     zona,
   }
+  if (status.aprobado) {
+    demoPendingTasks.push({
+      id: `TSK-${Math.floor(1000 + Math.random() * 9000)}`,
+      client: payload.cliente,
+      zone: zona,
+      service: payload.servicio,
+    })
+  }
   return newOrder
+}
+
+// =============================================================================
+// TABLERO KANBAN DE ÓRDENES EVALUADAS
+// Estados: 'Aprobada' (técnica OK, pago en revisión) · 'Autorizado' (despacho)
+// · 'Rechazada'. En vivo el trigger trg_pedido_a_tarea recalcula factibilidad
+// y crea la tarea de despacho cuando el pedido queda autorizado.
+// =============================================================================
+
+const ESTADOS_KANBAN = {
+  Aprobada: { cobertura_zona: true, pago_status: 'Pendiente', error_pago: null, estado: 'Evaluado' },
+  Autorizado: { cobertura_zona: true, pago_status: 'Aprobado', error_pago: null, motivo_factibilidad: null, estado: 'Pendiente' },
+  Rechazada: { cobertura_zona: false, pago_status: 'Rechazado', error_pago: 'Rechazo manual en revisión', estado: 'Rechazado' },
+}
+
+export function kanbanColumna(order) {
+  if (order.flag_aprobado) return 'Autorizado'
+  if (order.factibilidad === 'Aprobada') return 'Aprobada'
+  return 'Rechazada'
+}
+
+// Proyección local del estado que tendrá una orden al moverla de columna.
+// 'Aprobada' = evaluación técnica OK, pago en revisión (sin despacho aún).
+// 'Autorizado' = aprobada y autorizada (genera tarea en Operaciones).
+// 'Rechazada' = rechazada.
+export function aplicarEstadoKanban(order, columna) {
+  if (columna === 'Autorizado') {
+    return { ...order, factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, error_pago: null, motivoFeat: null, estado: 'Pendiente' }
+  }
+  if (columna === 'Aprobada') {
+    return { ...order, factibilidad: 'Aprobada', pagoStatus: 'Pendiente', flag_aprobado: false, error_pago: null, estado: 'Evaluado' }
+  }
+  return { ...order, factibilidad: 'Rechazada', pagoStatus: 'Rechazado', flag_aprobado: false, error_pago: 'Rechazo manual en revisión', estado: 'Rechazado' }
+}
+
+export async function actualizarEstadoPedido(orderId, columna) {
+  if (!supabase) return actualizarEstadoPedidoDemo(orderId, columna)
+  try {
+    const id = Number(String(orderId).replace('SIT-', ''))
+    const { error } = await supabase
+      .from('pedidos')
+      .update(ESTADOS_KANBAN[columna])
+      .eq('id_pedido', id)
+    if (error) throw error
+    // Si deja de estar autorizado, la orden de despacho ya no aplica.
+    if (columna !== 'Autorizado') {
+      await supabase.from('tareas').delete().eq('id_pedido', id)
+    }
+    // Relectura fresca: los triggers (fn_recalcular_pedido) recalculan
+    // factibilidad_ok / flag_aprobado, que no se reflejan en el PATCH.
+    const { data: fresh, error: rErr } = await supabase
+      .from('pedidos').select('*').eq('id_pedido', id).single()
+    if (rErr) throw rErr
+    return mapPedido(fresh)
+  } catch (e) {
+    console.error('actualizarEstadoPedido:', e)
+    throw e
+  }
+}
+
+export function actualizarEstadoPedidoDemo(orderId, columna) {
+  const order = demoPedidos.find((o) => o.id === orderId)
+  if (!order) return null
+  const updated = aplicarEstadoKanban(order, columna)
+  if (columna === 'Autorizado') {
+    if (!demoPendingTasks.some((t) => t.client === order.cliente)) {
+      demoPendingTasks.push({
+        id: `TSK-${Math.floor(1000 + Math.random() * 9000)}`,
+        client: order.cliente,
+        zone: order.zona || '',
+        service: order.servicio,
+      })
+    }
+  } else {
+    const idx = demoPendingTasks.findIndex((t) => t.client === order.cliente)
+    if (idx !== -1) demoPendingTasks.splice(idx, 1)
+  }
+  Object.assign(order, updated)
+  return { ...updated }
 }
 
 // =============================================================================
@@ -316,8 +472,8 @@ export async function reordenarEquipo(dbId) {
       lastReorderDate: new Date().toISOString().split('T')[0],
     }
   } catch (e) {
-    console.warn('reordenarEquipo fallback:', e?.message || e)
-    return { stock: 20, reorderStatus: 'Completado', lastReorderDate: new Date().toISOString().split('T')[0] }
+    console.error('reordenarEquipo:', e)
+    throw e
   }
 }
 
@@ -376,25 +532,43 @@ export async function asignarTecnico(task) {
   if (!supabase) return asignarTecnicoDemo(task)
   try {
     const { data: tecnicos } = await supabase.from('tecnicos').select('*')
-    const candidates = (tecnicos || []).filter(
-      (t) => t.zona_geografica === task.zone && t.disponibilidad
-    )
-    if (candidates.length === 0) {
-      return { error: `No hay técnicos activos en la Zona ${task.zone} en este momento.` }
+    const rows = (tecnicos || []).filter((t) => t.disponibilidad)
+    if (rows.length === 0) {
+      return { error: 'No hay técnicos disponibles en este momento.' }
     }
-    const selected = candidates.reduce((min, t) =>
-      t.carga_trabajo < min.carga_trabajo ? t : min, candidates[0])
+
+    const norm = rows.map((t) => ({
+      id: t.id_tecnico,
+      name: t.nombre_tecnico,
+      zone: t.zona_geografica,
+      workload: t.carga_trabajo,
+      status: 'Activo',
+    }))
+
+    // Preferencia 1: misma zona y menor carga de trabajo.
+    const sameZone = norm.filter((t) => t.zone === task.zone)
+    const sameZoneSel = sameZone.length > 0
+      ? sameZone.reduce((min, t) => (t.workload < min.workload ? t : min), sameZone[0])
+      : null
+    // Preferencia 2: técnico activo más cercano por distancia real (geolocalización).
+    const cercano = sameZoneSel ? null : tecnicoMasCercano(task.zone, norm)
+    const selected = sameZoneSel || cercano?.tecnico || null
+    const porProximidad = !sameZoneSel && Boolean(selected)
+    if (!selected) {
+      return { error: `No hay técnicos activos para atender la Zona ${task.zone}.` }
+    }
+    const real = rows.find((t) => t.id_tecnico === selected.id)
 
     await supabase
       .from('tecnicos')
-      .update({ carga_trabajo: selected.carga_trabajo + 1 })
-      .eq('id_tecnico', selected.id_tecnico)
+      .update({ carga_trabajo: real.carga_trabajo + 1 })
+      .eq('id_tecnico', real.id_tecnico)
 
     const { data: updated, error } = await supabase
       .from('tareas')
       .update({
         estado: 'Asignado',
-        id_tecnico: selected.id_tecnico,
+        id_tecnico: selected.id,
         fecha_asignacion: new Date().toISOString(),
       })
       .eq('id_tarea', task.dbId)
@@ -406,34 +580,44 @@ export async function asignarTecnico(task) {
       .from('instalaciones')
       .insert({
         id_pedido: updated.id_pedido || null,
-        id_tecnico: selected.id_tecnico,
+        id_tecnico: selected.id,
         fecha_programada: new Date().toISOString().split('T')[0],
         estado: 'Programada',
         materiales: updated.servicio,
       })
     if (iErr) throw iErr
 
+    const dist = distanciaEntreZonas(task.zone, real.zona_geografica)
     return {
       id: `ASG-${updated.id_tarea}`,
       task: updated.servicio,
       client: updated.cliente_nombre,
       zone: updated.zona_geografica,
-      tech: selected.nombre_tecnico,
+      tech: real.nombre_tecnico,
       status: 'En camino',
-      message: `Algoritmo ejecutado: ${task.id} asignado a ${selected.nombre_tecnico} (Zona ${task.zone}) debido a menor carga de trabajo activa.`,
+      message: porProximidad && dist != null
+        ? `Algoritmo ejecutado: ${task.id} asignado a ${real.nombre_tecnico} por proximidad (${dist.toFixed(1)} km desde su zona base) y menor carga de trabajo.`
+        : `Algoritmo ejecutado: ${task.id} asignado a ${real.nombre_tecnico} (Zona ${task.zone}) por menor carga de trabajo activa.`,
     }
   } catch (e) {
-    console.warn('asignarTecnico fallback a demo:', e?.message || e)
-    return asignarTecnicoDemo(task)
+    console.error('asignarTecnico:', e)
+    throw e
   }
 }
 
 export function asignarTecnicoDemo(task) {
-  const candidates = demoTecnicos.filter((t) => t.zone === task.zone && t.status === 'Activo')
-  if (candidates.length === 0) {
+  const activos = demoTecnicos.filter((t) => t.status === 'Activo')
+  const sameZone = activos.filter((t) => t.zone === task.zone)
+  const sameZoneSel = sameZone.length > 0
+    ? sameZone.reduce((min, t) => (t.workload < min.workload ? t : min), sameZone[0])
+    : null
+  const cercano = sameZoneSel ? null : tecnicoMasCercano(task.zone, activos)
+  const selected = sameZoneSel || cercano?.tecnico || null
+  const porProximidad = !sameZoneSel && Boolean(selected)
+  if (!selected) {
     return { error: `No hay técnicos activos en la Zona ${task.zone} en este momento.` }
   }
-  const selected = candidates.reduce((min, t) => (t.workload < min.workload ? t : min), candidates[0])
+  const dist = distanciaEntreZonas(task.zone, selected.zone)
   return {
     id: `ASG-${Math.floor(800 + Math.random() * 100)}`,
     task: task.service,
@@ -441,7 +625,9 @@ export function asignarTecnicoDemo(task) {
     zone: task.zone,
     tech: selected.name,
     status: 'En camino',
-    message: `Algoritmo ejecutado: ${task.id} asignado a ${selected.name} (Zona ${task.zone}) debido a menor carga de trabajo activa (Trabajos anteriores: ${selected.workload}).`,
+    message: porProximidad && dist != null
+      ? `Algoritmo ejecutado: ${task.id} asignado a ${selected.name} por proximidad (${dist.toFixed(1)} km desde su zona base) y menor carga de trabajo.`
+      : `Algoritmo ejecutado: ${task.id} asignado a ${selected.name} (Zona ${task.zone}) por menor carga de trabajo activa (Trabajos anteriores: ${selected.workload}).`,
   }
 }
 
@@ -502,14 +688,8 @@ export async function guardarInstalacion(instalacion) {
       serverId: data?.id_instalacion,
     }
   } catch (e) {
-    console.warn('guardarInstalacion fallback a demo:', e?.message || e)
-    return {
-      task: { client: instalacion.client, service: instalacion.service },
-      notes: instalacion.notes,
-      status: instalacion.status,
-      signature: instalacion.signature,
-      timestamp: new Date().toLocaleString(),
-    }
+    console.error('guardarInstalacion:', e)
+    throw e
   }
 }
 
@@ -533,6 +713,10 @@ export async function fetchFacturas() {
       rif: r.rif || '',
       fecha: r.fecha_emision,
       estado_pago: r.estado_pago,
+      tasa_bcv: r.tasa_bcv != null ? Number(r.tasa_bcv) : null,
+      igtf_usd: r.igtf_usd != null ? Number(r.igtf_usd) : null,
+      igtf_bs: r.igtf_bs != null ? Number(r.igtf_bs) : null,
+      monto_bs: r.monto_bs != null ? Number(r.monto_bs) : null,
       items: (r.items || []).map((i) => i.desc),
     }))
   }, () => [...demoFacturas])
@@ -555,6 +739,17 @@ export async function fetchFacturables() {
 }
 
 export async function generarFactura(pedido) {
+  // Multimoneda: tasa BCV del día + IGTF 3% (requisito fiscal venezolano).
+  const tasaInfo = await getTasaBCV().catch(() => ({ tasa: null }))
+  const tasa = Number(tasaInfo?.tasa) || null
+  const mm = tasa ? calcularIGTF(Number(pedido.total), tasa) : null
+  const mmFields = {
+    tasa_bcv: tasa,
+    igtf_usd: mm ? mm.igtfUsd : null,
+    igtf_bs: mm ? mm.igtfBs : null,
+    monto_bs: mm ? mm.totalBs : null,
+  }
+
   if (!supabase) {
     return {
       id: `FAC-${Math.floor(2100 + Math.random() * 50)}`,
@@ -564,6 +759,7 @@ export async function generarFactura(pedido) {
       rif: pedido.rif || '',
       fecha: new Date().toISOString().split('T')[0],
       items: [pedido.servicio, 'Servicios complementarios'],
+      ...mmFields,
     }
   }
   try {
@@ -575,6 +771,10 @@ export async function generarFactura(pedido) {
         monto_total: Number(pedido.total),
         rif: pedido.rif || null,
         estado_pago: 'Pendiente',
+        tasa_bcv: tasa,
+        igtf_usd: mm?.igtfUsd ?? null,
+        igtf_bs: mm?.igtfBs ?? null,
+        monto_bs: mm?.totalBs ?? null,
         items: [{ desc: pedido.servicio }, { desc: 'Servicios complementarios' }],
       })
       .select('*').single()
@@ -587,18 +787,14 @@ export async function generarFactura(pedido) {
       rif: data.rif || '',
       fecha: data.fecha_emision,
       items: (data.items || []).map((i) => i.desc),
+      tasa_bcv: data.tasa_bcv != null ? Number(data.tasa_bcv) : tasa,
+      igtf_usd: data.igtf_usd != null ? Number(data.igtf_usd) : (mm?.igtfUsd ?? null),
+      igtf_bs: data.igtf_bs != null ? Number(data.igtf_bs) : (mm?.igtfBs ?? null),
+      monto_bs: data.monto_bs != null ? Number(data.monto_bs) : (mm?.totalBs ?? null),
     }
   } catch (e) {
-    console.warn('generarFactura fallback a demo:', e?.message || e)
-    return {
-      id: `FAC-${Math.floor(2100 + Math.random() * 50)}`,
-      orderId: `SIT-${pedido.id_pedido}`,
-      cliente: pedido.cliente,
-      total: Number(pedido.total),
-      rif: pedido.rif || '',
-      fecha: new Date().toISOString().split('T')[0],
-      items: [pedido.servicio, 'Servicios complementarios'],
-    }
+    console.error('generarFactura:', e)
+    throw e
   }
 }
 
@@ -759,11 +955,202 @@ export async function registrarEncuesta({ cliente, rating, comentario }) {
 }
 
 // =============================================================================
+// MANTENIMIENTO PREVENTIVO (CRM Postventa)
+// Calendario automático de visitas semestrales que genera órdenes de trabajo
+// en `tareas` (despacho de Operaciones) cuando la visita está vencida o al día.
+// =============================================================================
+
+export const TIPOS_MANTENIMIENTO = [
+  { label: 'Revisión Integral Semestral', tareas: 'Cambio de baterías de respaldo; limpieza de lentes de cámaras; prueba de sirena; verificación general.' },
+  { label: 'Cambio de Baterías de Respaldo', tareas: 'Reemplazo de baterías de UPS/respaldo y prueba de autonomía.' },
+  { label: 'Limpieza de Lentes de Cámaras', tareas: 'Limpieza óptica de lentes y ajuste de enfoque/ángulo.' },
+  { label: 'Prueba de Sirena y Alarmas', tareas: 'Prueba funcional de sirena, sensores PIR y central de alarma.' },
+]
+
+export function tipoTareasMantenimiento(tipo) {
+  const t = TIPOS_MANTENIMIENTO.find((x) => x.label === tipo)
+  return t ? t.tareas : ''
+}
+
+function sumarDias(dateISO, days) {
+  const d = new Date(`${dateISO}T00:00:00`)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+function sumarMeses(dateISO, months) {
+  const d = new Date(`${dateISO}T00:00:00`)
+  d.setMonth(d.getMonth() + months)
+  return d.toISOString().slice(0, 10)
+}
+
+const demoMantenimientos = (() => {
+  const hoy = new Date().toISOString().slice(0, 10)
+  return [
+    { id: 'MNT-101', dbId: null, client: 'Lucas Peralta', zone: 'Distrito Capital', servicio: 'Cámaras Residenciales', tipo: 'Revisión Integral Semestral', tareas: tipoTareasMantenimiento('Revisión Integral Semestral'), frecuencia: 6, fecha: sumarDias(hoy, 12), ultima: sumarMeses(hoy, -5), estado: 'Programado', tecnico: 'Ariel Ramírez' },
+    { id: 'MNT-102', dbId: null, client: 'Banco Nación', zone: 'Miranda', servicio: 'Alarma de Incendios', tipo: 'Cambio de Baterías de Respaldo', tareas: tipoTareasMantenimiento('Cambio de Baterías de Respaldo'), frecuencia: 6, fecha: sumarDias(hoy, 40), ultima: null, estado: 'Programado', tecnico: 'Carlos Ortega' },
+    { id: 'MNT-103', dbId: null, client: 'Estación YPF', zone: 'Bolívar', servicio: 'Cámaras IP Corporativas', tipo: 'Limpieza de Lentes de Cámaras', tareas: tipoTareasMantenimiento('Limpieza de Lentes de Cámaras'), frecuencia: 6, fecha: sumarDias(hoy, -3), ultima: sumarMeses(hoy, -6), estado: 'Vencido', tecnico: null },
+  ]
+})()
+
+const mapMantenimiento = (r) => ({
+  id: `MNT-${r.id_mantenimiento}`,
+  dbId: r.id_mantenimiento,
+  idPedido: r.id_pedido,
+  client: r.cliente_nombre,
+  zone: r.zona_geografica,
+  servicio: r.servicio,
+  tipo: r.tipo_visita,
+  tareas: r.tareas,
+  frecuencia: r.frecuencia_meses,
+  fecha: r.fecha_programada,
+  ultima: r.ultima_visita,
+  estado: r.estado,
+  tecnicoId: r.id_tecnico,
+})
+
+export async function fetchMantenimientos() {
+  return withFallback(async () => {
+    const { data, error } = await supabase
+      .from('mantenimientos')
+      .select('*, tecnicos(nombre_tecnico)')
+      .order('fecha_programada', { ascending: true })
+    if (error) throw error
+    return (data || []).map((r) => ({ ...mapMantenimiento(r), tecnico: r.tecnicos?.nombre_tecnico || null }))
+  }, () => demoMantenimientos.map((m) => ({ ...m })))
+}
+
+export async function programarMantenimiento({ cliente, tipo, fecha, frecuencia = 6, idPedido = null, zona = '', servicio = '' }) {
+  const payload = {
+    cliente_nombre: cliente,
+    tipo_visita: tipo,
+    tareas: tipoTareasMantenimiento(tipo),
+    frecuencia_meses: Number(frecuencia) || 6,
+    fecha_programada: fecha,
+    estado: 'Programado',
+  }
+  if (idPedido) payload.id_pedido = idPedido
+  if (zona) payload.zona_geografica = zona
+  if (servicio) payload.servicio = servicio
+
+  if (!supabase) {
+    const item = {
+      id: `MNT-${Math.floor(200 + Math.random() * 700)}`,
+      dbId: null,
+      client: cliente,
+      zone: zona,
+      servicio,
+      tipo,
+      tareas: payload.tareas,
+      frecuencia: payload.frecuencia_meses,
+      fecha,
+      ultima: null,
+      estado: 'Programado',
+      tecnico: null,
+    }
+    demoMantenimientos.unshift(item)
+    return { ...item }
+  }
+
+  const { data, error } = await supabase.from('mantenimientos').insert(payload).select('*').single()
+  if (error) throw error
+  return { ...mapMantenimiento(data), tecnico: null }
+}
+
+// Completar la visita: registra la fecha y agenda automáticamente el próximo
+// ciclo (+frecuencia en meses), generando la orden periódica siguiente.
+export async function completarMantenimiento(id) {
+  if (!supabase) {
+    const target = demoMantenimientos.find((m) => m.dbId === id || m.id === id)
+    if (target) {
+      const hoy = new Date().toISOString().slice(0, 10)
+      target.ultima = hoy
+      target.fecha = sumarMeses(hoy, target.frecuencia || 6)
+      target.estado = 'Programado'
+      target.tecnico = target.tecnico || 'Técnico asignado'
+    }
+    return target || { id }
+  }
+
+  const { data: current } = await supabase.from('mantenimientos').select('*').eq('id_mantenimiento', id).single()
+  if (!current) throw new Error('Plan de mantenimiento no encontrado.')
+  const hoy = new Date().toISOString().slice(0, 10)
+  const prox = sumarMeses(hoy, current.frecuencia_meses || 6)
+  const { data, error } = await supabase
+    .from('mantenimientos')
+    .update({ estado: 'Programado', ultima_visita: hoy, fecha_programada: prox, notificado: false })
+    .eq('id_mantenimiento', id)
+    .select('*').single()
+  if (error) throw error
+  // Cierra la orden de trabajo de despacho vinculada, si existe.
+  await supabase.from('tareas').update({ estado: 'Completado' }).eq('id_mantenimiento', id)
+  return { ...mapMantenimiento(data), tecnico: null }
+}
+
+// Asigna técnico al plan y a su orden de trabajo pendiente (despacho).
+export async function asignarTecnicoMantenimiento(id, idTecnico, nombreTecnico = '') {
+  if (!supabase) {
+    const target = demoMantenimientos.find((m) => m.dbId === id || m.id === id)
+    if (target) target.tecnico = nombreTecnico || `#${idTecnico}`
+    return target || { id }
+  }
+  const { data, error } = await supabase
+    .from('mantenimientos').update({ id_tecnico: idTecnico }).eq('id_mantenimiento', id).select('*').single()
+  if (error) throw error
+  await supabase
+    .from('tareas')
+    .update({ id_tecnico: idTecnico, estado: 'Asignado', fecha_asignacion: new Date().toISOString() })
+    .eq('id_mantenimiento', id)
+  return { ...mapMantenimiento(data), tecnico: nombreTecnico }
+}
+
+// Barrido automático del calendario: marca vencidas y genera las órdenes de
+// trabajo (tareas) de las visitas vencidas o del día, una por plan.
+export async function sincronizarMantenimientos() {
+  if (!supabase) {
+    const hoy = new Date().toISOString().slice(0, 10)
+    const vencidas = demoMantenimientos.filter((m) => m.fecha < hoy).length
+    return { creadas: 0, vencidas }
+  }
+
+  const hoy = new Date().toISOString().slice(0, 10)
+  const { data: planes, error } = await supabase
+    .from('mantenimientos').select('*').lte('fecha_programada', hoy).not('estado', 'eq', 'Completado')
+  if (error) throw error
+
+  let creadas = 0
+  for (const p of planes || []) {
+    if (p.fecha_programada < hoy && p.estado !== 'Vencido') {
+      await supabase.from('mantenimientos').update({ estado: 'Vencido' }).eq('id_mantenimiento', p.id_mantenimiento)
+    }
+    const { data: existing } = await supabase
+      .from('tareas').select('id_tarea').eq('id_mantenimiento', p.id_mantenimiento).limit(1)
+    if (!existing || existing.length === 0) {
+      const { error: tErr } = await supabase.from('tareas').insert({
+        cliente_nombre: p.cliente_nombre,
+        zona_geografica: p.zona_geografica,
+        servicio: `Mantenimiento Preventivo: ${p.tipo_visita}`,
+        estado: 'Pendiente',
+        id_pedido: p.id_pedido,
+        id_mantenimiento: p.id_mantenimiento,
+      })
+      if (tErr) throw tErr
+      creadas += 1
+    }
+  }
+  return { creadas, vencidas: (planes || []).length }
+}
+
+// =============================================================================
 // USUARIOS Y PERFILES (roles)
 // =============================================================================
 
 const demoProfiles = [
-  { id: 'u-admin', email: 'admin@tecnoinnova.com', nombre: 'Administrador', rol: 'admin', activo: true },
+  { id: 'u-admin', email: 'admin@tecnoinnova.com', nombre: 'Administrador / Gerente', rol: 'admin', activo: true },
+  { id: 'u-vendedor', email: 'ventas@tecnoinnova.com', nombre: 'Vendedor Call Center', rol: 'vendedor', activo: true },
+  { id: 'u-logistica', email: 'logistica@tecnoinnova.com', nombre: 'Logística y Despacho', rol: 'logistica', activo: true },
+  { id: 'u-tecnico', email: 'tecnico@tecnoinnova.com', nombre: 'Técnico de Campo', rol: 'tecnico', activo: true },
+  { id: 'u-soporte', email: 'soporte@tecnoinnova.com', nombre: 'Soporte y Postventa', rol: 'soporte', activo: true },
   { id: 'u-basic', email: 'operador@tecnoinnova.com', nombre: 'Operador Site A', rol: 'basico', activo: true },
 ]
 
@@ -931,18 +1318,60 @@ export async function fetchMetricasSemanales() {
       op: rows.map((r, i) => ({
         label: DIAS[new Date(r.dia).getDay()] || `D${i + 1}`,
         value: r.servicios,
+        fecha: String(r.dia).slice(0, 10),
       })),
       ing: rows.map((r, i) => ({
         label: DIAS[new Date(r.dia).getDay()] || `D${i + 1}`,
         value: Number(r.ventas),
+        fecha: String(r.dia).slice(0, 10),
       })),
     }
   }, () => {
     return {
-      op: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.servicios })),
-      ing: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.ventas })),
+      op: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.servicios, fecha: demoFechaIso(i) })),
+      ing: demoSemana.map((r, i) => ({ label: DIAS[i], value: r.ventas, fecha: demoFechaIso(i) })),
     }
   })
+}
+
+// Fecha ISO (aaaa-mm-dd) para el día i-ésimo de los últimos 7 días (0 = hoy).
+const demoFechaIso = (i) => new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(0, 10)
+
+const DEMO_SERVICIOS = ['Cámaras Residenciales', 'Monitoreo 24/7', 'Control de Acceso Rfid', 'Alarma de Incendios + CCT']
+
+function demoDesglose() {
+  const out = {}
+  demoSemana.forEach((r, i) => {
+    const fecha = demoFechaIso(i)
+    const tipos = i % 2 === 0 ? [DEMO_SERVICIOS[0], DEMO_SERVICIOS[1]] : [DEMO_SERVICIOS[2], DEMO_SERVICIOS[3]]
+    out[fecha] = {
+      [tipos[0]]: Math.ceil(r.servicios / 2),
+      [tipos[1]]: Math.floor(r.servicios / 2),
+    }
+  })
+  return out
+}
+
+// Desglose por día y tipo de servicio de los últimos 7 días, para el tooltip
+// del gráfico de Actividad del Sistema. Devuelve { 'aaaa-mm-dd': { servicio: n } }.
+export async function fetchDesgloseSemanal() {
+  return withFallback(async () => {
+    const desde = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('fecha_pedido, tipo_servicio')
+      .gte('fecha_pedido', desde)
+    if (error) throw error
+    const counts = {}
+    for (const r of data || []) {
+      const dia = String(r.fecha_pedido).slice(0, 10)
+      if (!dia) continue
+      if (!counts[dia]) counts[dia] = {}
+      const tipo = r.tipo_servicio || 'Otro'
+      counts[dia][tipo] = (counts[dia][tipo] || 0) + 1
+    }
+    return counts
+  }, () => demoDesglose())
 }
 
 // Etiqueta corta para un día en rangos mayores a la semana (p. ej. "12/03").
