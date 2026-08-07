@@ -31,20 +31,24 @@ export function formatDate(dateStr) {
 // Fallback DEMO (mismos datos mock de las vistas originales)
 // =============================================================================
 
+const demoFechaRel = (dias) => new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10)
+
 const demoPedidos = [
-  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 350, fecha: '2026-06-11', error_pago: null, motivoFeat: null, estado: 'Pendiente', geoEstado: 'Distrito Capital', municipio: 'Libertador', ciudad: 'Caracas', zona: 'Caracas, Libertador, Distrito Capital' },
-  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 1200, fecha: '2026-06-10', error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', geoEstado: 'Zulia', municipio: 'Maracaibo', ciudad: 'Maracaibo', zona: 'Maracaibo, Maracaibo, Zulia' },
-  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 850, fecha: '2026-06-09', error_pago: 'Fondos Insuficientes', motivoFeat: null, geoEstado: 'Carabobo', municipio: 'Valencia', ciudad: 'Valencia', zona: 'Valencia, Valencia, Carabobo' },
-  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 6800, fecha: '2026-06-08', error_pago: null, motivoFeat: null, geoEstado: 'Aragua', municipio: 'Girardot', ciudad: 'Maracay', zona: 'Maracay, Girardot, Aragua' },
+  { id: 'SIT-7844', cliente: 'Lucas Peralta', origen: 'Web', servicio: 'Cámaras Residenciales', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 350, fecha: demoFechaRel(3), error_pago: null, motivoFeat: null, estado: 'Pendiente', geoEstado: 'Distrito Capital', municipio: 'Libertador', ciudad: 'Caracas', zona: 'Caracas, Libertador, Distrito Capital' },
+  { id: 'SIT-7842', cliente: 'Consorcio Las Heras', origen: 'Call Center', servicio: 'Monitoreo 24/7', factibilidad: 'Rechazada', pagoStatus: 'Aprobado', flag_aprobado: false, total: 1200, fecha: demoFechaRel(6), error_pago: null, motivoFeat: 'Sin cobertura de fibra en coordenadas', geoEstado: 'Zulia', municipio: 'Maracaibo', ciudad: 'Maracaibo', zona: 'Maracaibo, Maracaibo, Zulia' },
+  { id: 'SIT-7840', cliente: 'Marcos Silva', origen: 'Call Center', servicio: 'Control de Acceso Rfid', factibilidad: 'Aprobada', pagoStatus: 'Rechazado', flag_aprobado: false, total: 850, fecha: demoFechaRel(1), error_pago: 'Fondos Insuficientes', motivoFeat: null, geoEstado: 'Carabobo', municipio: 'Valencia', ciudad: 'Valencia', zona: 'Valencia, Valencia, Carabobo' },
+  { id: 'SIT-7839', cliente: 'Clínica del Parque', origen: 'Web', servicio: 'Alarma de Incendios + CCT', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 6800, fecha: demoFechaRel(8), error_pago: null, motivoFeat: null, estado: 'Pendiente', geoEstado: 'Aragua', municipio: 'Girardot', ciudad: 'Maracay', zona: 'Maracay, Girardot, Aragua' },
+  { id: 'SIT-7838', cliente: 'Banco Nación', origen: 'Call Center', servicio: 'Alarma de Incendios', factibilidad: 'Aprobada', pagoStatus: 'Aprobado', flag_aprobado: true, total: 2100, fecha: demoFechaRel(12), error_pago: null, motivoFeat: null, estado: 'Instalado', geoEstado: 'Miranda', municipio: 'Chacao', ciudad: 'Caracas', zona: 'Caracas, Chacao, Miranda' },
 ]
 
 const demoInventario = [
-  { id: 'INV-101', dbId: 'INV-101', name: 'Cámara IP Domo 4K', stock: 12, minThreshold: 15, autoReorder: true, lastReorderDate: '2026-06-01', reorderStatus: 'Pendiente' },
-  { id: 'INV-102', dbId: 'INV-102', name: 'Sensor PIR Movimiento', stock: 3, minThreshold: 10, autoReorder: true, lastReorderDate: null, reorderStatus: 'Ninguno' },
+  { id: 'INV-101', dbId: 'INV-101', name: 'Cámara IP Domo 4K', stock: 12, minThreshold: 15, autoReorder: true, lastReorderDate: demoFechaRel(20), reorderStatus: 'Pendiente' },
+  { id: 'INV-102', dbId: 'INV-102', name: 'Sensor PIR Movimiento', stock: 3, minThreshold: 10, autoReorder: true, lastReorderDate: demoFechaRel(2), reorderStatus: 'Pendiente' },
   { id: 'INV-103', dbId: 'INV-103', name: 'Panel Alarma Híbrido', stock: 8, minThreshold: 5, autoReorder: false, lastReorderDate: null, reorderStatus: 'Ninguno' },
-  { id: 'INV-104', dbId: 'INV-104', name: 'Cable Coaxial RG6 (Rollo)', stock: 25, minThreshold: 20, autoReorder: true, lastReorderDate: null, reorderStatus: 'Ninguno' },
-  { id: 'INV-105', dbId: 'INV-105', name: 'Batería Respaldo 12V', stock: 2, minThreshold: 8, autoReorder: true, lastReorderDate: '2026-06-11', reorderStatus: 'Despachado' },
+  { id: 'INV-104', dbId: 'INV-104', name: 'Cable Coaxial RG6 (Rollo)', stock: 25, minThreshold: 20, autoReorder: true, lastReorderDate: demoFechaRel(15), reorderStatus: 'Despachado' },
+  { id: 'INV-105', dbId: 'INV-105', name: 'Batería Respaldo 12V', stock: 2, minThreshold: 8, autoReorder: true, lastReorderDate: demoFechaRel(9), reorderStatus: 'Despachado' },
   { id: 'INV-106', dbId: 'INV-106', name: 'Control de Acceso RFID', stock: 6, minThreshold: 4, autoReorder: true, lastReorderDate: null, reorderStatus: 'Ninguno' },
+  { id: 'INV-107', dbId: 'INV-107', name: 'NVR 8 Canales (Grabación)', stock: 9, minThreshold: 5, autoReorder: false, lastReorderDate: null, reorderStatus: 'Ninguno' },
 ]
 
 const demoTecnicos = [
@@ -123,37 +127,40 @@ const demoTecnicos = [
 ]
 
 const demoPendingTasks = [
-  { id: 'TSK-908', client: 'Banco Nación', zone: 'Miranda', service: 'Instalación Alarma de Incendios' },
+  { id: 'TSK-908', client: 'Sede Torre Central', zone: 'Distrito Capital', service: 'Instalación Alarma de Incendios' },
   { id: 'TSK-909', client: 'Gimnasio FitLife', zone: 'Aragua', service: 'Mantenimiento Cámaras' },
   { id: 'TSK-910', client: 'Residencia Olivos', zone: 'Distrito Capital', service: 'Instalación Sensores PIR' },
   { id: 'TSK-911', client: 'Depósito Puerto', zone: 'Carabobo', service: 'Reemplazo de Baterías UPS' },
 ]
 
 const demoAssignments = [
-  { id: 'ASG-701', task: 'Instalación Cámaras IP', client: 'Estación YPF', zone: 'Aragua', tech: 'Marcos Benítez', status: 'En camino' },
+  { id: 'ASG-701', task: 'Instalación Cámaras IP', client: 'Estación YPF', zone: 'Aragua', tech: 'Sofía Herrera', status: 'En camino' },
 ]
 
 const demoInstalaciones = [
   { id: 'INST-9001', taskId: 'TSK-7844', client: 'Lucas Peralta', address: 'Av. Francisco de Miranda, Chacao, Distrito Capital', zone: 'Distrito Capital', service: 'Instalación Cámaras Residenciales', components: '3x Cámaras Domo IP, 1x NVR 8 Canales', estado: 'Programada', tecnico: 'TECH-01' },
+  { id: 'INST-9002', taskId: 'TSK-7838', client: 'Banco Nación', address: 'Av. Francisco de Miranda, Chacao, Miranda', zone: 'Miranda', service: 'Instalación Alarma de Incendios', components: '1x Panel Alarma Híbrido, 8x Detectores de Humo', estado: 'Completada', tecnico: 'TECH-03' },
 ]
 
 const demoFacturas = [
-  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, rif: 'V-19347823-3', fecha: '2026-06-11', items: ['Instalación Cámaras Residenciales', 'Configuración de Red'], tasa_bcv: 36.5, igtf_usd: 10.5, igtf_bs: 383.25, monto_bs: 13156.5 },
-  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, rif: 'J-30581262-3', fecha: '2026-06-08', items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'], tasa_bcv: 36.5, igtf_usd: 204, igtf_bs: 7446, monto_bs: 255646 },
+  { id: 'FAC-2091', orderId: 'SIT-7844', cliente: 'Lucas Peralta', total: 350, rif: 'V-19347823-3', fecha: demoFechaRel(2), items: ['Instalación Cámaras Residenciales', 'Configuración de Red'], tasa_bcv: 36.5, igtf_usd: 10.5, igtf_bs: 383.25, monto_bs: 12775 },
+  { id: 'FAC-2092', orderId: 'SIT-7839', cliente: 'Clínica del Parque', total: 6800, rif: 'J-30581262-3', fecha: demoFechaRel(7), items: ['Alarma de Incendios + CCT', 'Servicio Monitoreo Anual'], tasa_bcv: 36.5, igtf_usd: 204, igtf_bs: 7446, monto_bs: 248200 },
+  { id: 'FAC-2093', orderId: 'SIT-7838', cliente: 'Banco Nación', total: 2100, rif: 'J-29845173-2', fecha: demoFechaRel(12), items: ['Alarma de Incendios', 'Monitoreo y Mantenimiento'], tasa_bcv: 36.5, igtf_usd: 63, igtf_bs: 2299.5, monto_bs: 76650 },
 ]
 
 const demoLogs = [
-  { id: 'LOG-4501', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7844 - Lucas Peralta', monto: 350, fecha: '2026-06-11 15:45', status: 'Verificado' },
-  { id: 'LOG-4502', tipo: 'Egreso', descripcion: 'Pago Proveedor Cámaras S.A. (Compra Stock)', monto: -4200, fecha: '2026-06-10 11:20', status: 'Verificado' },
-  { id: 'LOG-4503', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7839 - Clínica del Parque', monto: 6800, fecha: '2026-06-08 09:15', status: 'Verificado' },
-  { id: 'LOG-4504', tipo: 'Ajuste', descripcion: 'Nota de Crédito para Pedido #7840 (Error pago)', monto: -850, status: 'Pendiente', fecha: '2026-06-09 17:00' },
+  { id: 'LOG-4501', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7838 - Banco Nación (Alarma de Incendios)', monto: 2100, fecha: `${demoFechaRel(12)} 10:30`, status: 'Verificado' },
+  { id: 'LOG-4502', tipo: 'Egreso', descripcion: 'Pago Proveedor Cámaras S.A. (Compra Stock)', monto: -4200, fecha: `${demoFechaRel(10)} 11:20`, status: 'Verificado' },
+  { id: 'LOG-4503', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7839 - Clínica del Parque', monto: 6800, fecha: `${demoFechaRel(7)} 09:15`, status: 'Verificado' },
+  { id: 'LOG-4504', tipo: 'Ajuste', descripcion: 'Nota de Crédito para Pedido #7840 (Error pago)', monto: -850, fecha: `${demoFechaRel(1)} 17:00`, status: 'Pendiente' },
+  { id: 'LOG-4505', tipo: 'Ingreso', descripcion: 'Cobro de Pedido #7844 - Lucas Peralta', monto: 350, fecha: `${demoFechaRel(2)} 15:45`, status: 'Verificado' },
 ]
 
 const demoIncidencias = [
   { id: 'INC-8801', client: 'Lucas Peralta', type: 'Desconexión de Canal', date: 'Hace 1 día', status: 'Cerrado', resolution: 'Resuelto por control remoto (Reinicio IP)' },
   { id: 'INC-8802', client: 'Banco Nación', type: 'Falsa Alarma Nocturna', date: 'Hace 3 días', status: 'Investigando', resolution: 'Enviando técnico para recalibrar sensor PIR' },
-  { id: 'INC-8803', client: 'Clínica del Parque', type: 'Baja Batería Respaldo', date: 'Hace 5 días', status: 'Abierto', resolution: 'Batería de respaldo agotada, requiere recambio' },
-  { id: 'INC-8804', client: 'Marcos Silva', type: 'Error Configuración App', date: 'Hace 6 días', status: 'Cerrado', resolution: 'Soporte telefónico configuró credenciales' },
+  { id: 'INC-8803', client: 'Clínica del Parque', type: 'Baja Batería de Respaldo', date: 'Hace 5 días', status: 'Abierto', resolution: 'Batería de respaldo agotada, requiere recambio programado' },
+  { id: 'INC-8804', client: 'Depósito Puerto', type: 'Error de Configuración de App', date: 'Hace 6 días', status: 'Cerrado', resolution: 'Soporte telefónico configuró las credenciales de acceso' },
 ]
 
 const demoEncuestas = [
@@ -176,9 +183,10 @@ const demoSemana = [
 ]
 
 const demoAlertas = [
-  { id: 'D1', type: 'warning', title: 'Inventario Crítico', description: 'Sensores de movimiento infrarrojos (Ref: PIR-400) por debajo del umbral de seguridad (5 unidades restantes).', time: 'Hace 15 min', details: 'Inventario actual: 3 unidades. Umbral configurado: 5 unidades. Se sugiere reabastecimiento automático.' },
+  { id: 'D1', type: 'warning', title: 'Inventario Crítico', description: 'Sensores de movimiento infrarrojos (Ref: INV-102) por debajo del umbral de seguridad. Solo quedan 3 unidades.', time: 'Hace 15 min', details: 'Inventario actual: 3 unidades. Umbral configurado: 10 unidades. Se recomienda reposición automática (autoReorder activo).' },
   { id: 'D2', type: 'success', title: 'Autenticación de Pago', description: 'Pago aprobado para Pedido #7844 (Web) por $350,00 USD. Estado: flag_aprobado = true.', time: 'Hace 30 min', details: 'Transacción ID: TXN-9081273. Procesador: Stripe SIT. Tarjeta terminada en 4821.' },
-  { id: 'D3', type: 'error', title: 'Error de Pago', description: 'Pago rechazado para Pedido #7840 (Call Center). Error: error_pago (Fondos Insuficientes).', time: 'Hace 2 horas', details: 'Cliente: Marcos Silva. Re-intento programado de forma manual en 24 horas.' },
+  { id: 'D3', type: 'error', title: 'Error de Pago', description: 'Pago rechazado para Pedido #7840 (Call Center). Error: Fondos Insuficientes.', time: 'Hace 2 horas', details: 'Cliente: Marcos Silva. Re-intento programado de forma manual en 24 horas.' },
+  { id: 'D4', type: 'info', title: 'Factibilidad Técnica', description: 'Pedido #7842 (Monitoreo 24/7) rechazado por falta de cobertura de fibra en las coordenadas.', time: 'Hace 5 horas', details: 'Consorcio Las Heras · Zona: Maracaibo, Maracaibo, Zulia. Solicitada validación de radioenlace alternativo.' },
 ]
 
 // =============================================================================
@@ -987,7 +995,7 @@ const demoMantenimientos = (() => {
   return [
     { id: 'MNT-101', dbId: null, client: 'Lucas Peralta', zone: 'Distrito Capital', servicio: 'Cámaras Residenciales', tipo: 'Revisión Integral Semestral', tareas: tipoTareasMantenimiento('Revisión Integral Semestral'), frecuencia: 6, fecha: sumarDias(hoy, 12), ultima: sumarMeses(hoy, -5), estado: 'Programado', tecnico: 'Ariel Ramírez' },
     { id: 'MNT-102', dbId: null, client: 'Banco Nación', zone: 'Miranda', servicio: 'Alarma de Incendios', tipo: 'Cambio de Baterías de Respaldo', tareas: tipoTareasMantenimiento('Cambio de Baterías de Respaldo'), frecuencia: 6, fecha: sumarDias(hoy, 40), ultima: null, estado: 'Programado', tecnico: 'Carlos Ortega' },
-    { id: 'MNT-103', dbId: null, client: 'Estación YPF', zone: 'Bolívar', servicio: 'Cámaras IP Corporativas', tipo: 'Limpieza de Lentes de Cámaras', tareas: tipoTareasMantenimiento('Limpieza de Lentes de Cámaras'), frecuencia: 6, fecha: sumarDias(hoy, -3), ultima: sumarMeses(hoy, -6), estado: 'Vencido', tecnico: null },
+    { id: 'MNT-103', dbId: null, client: 'Estación YPF', zone: 'Aragua', servicio: 'Cámaras IP Corporativas', tipo: 'Limpieza de Lentes de Cámaras', tareas: tipoTareasMantenimiento('Limpieza de Lentes de Cámaras'), frecuencia: 6, fecha: sumarDias(hoy, -3), ultima: sumarMeses(hoy, -6), estado: 'Vencido', tecnico: null },
   ]
 })()
 
@@ -1258,9 +1266,9 @@ export async function updateProfileState(id, estado) {
 // =============================================================================
 
 const demoEstados = [
-  { estado: 'Instalado', value: 2 },
-  { estado: 'Pendiente', value: 1 },
-  { estado: 'Rechazado', value: 1 },
+  { estado: 'Pendiente', value: 2 },
+  { estado: 'Rechazado', value: 2 },
+  { estado: 'Instalado', value: 1 },
 ]
 
 export async function fetchEstadosPedidos() {
