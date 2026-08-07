@@ -48,7 +48,7 @@ export default function DashboardLayout() {
   return (
     <div className="dashboard-layout">
       {/* Mobile Header */}
-      <div className="mobile-header glass-panel" style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)' }}>
+      <div className="mobile-header glass-panel" style={{ background: 'var(--glass-bg-strong)', backdropFilter: 'blur(20px)' }}>
         <button className="icon-btn" onClick={toggleMobileMenu} aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={mobileMenuOpen}>
           <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>

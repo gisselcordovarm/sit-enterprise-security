@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { buscarGlobal } from '../../lib/data';
+import { toggleTheme, getInitialTheme } from '../../lib/theme';
 import NotificationsMenu from '../common/NotificationsMenu';
 
 const TIPO_ICON = {
@@ -19,6 +20,7 @@ export default function TopBar({ onToggleSidebar }) {
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme());
   const boxRef = useRef(null);
   const timer = useRef(null);
   const requestedRef = useRef(''); // descarta responses de consultas fuera de orden
@@ -30,6 +32,10 @@ export default function TopBar({ onToggleSidebar }) {
     document.addEventListener('mousedown', click);
     return () => document.removeEventListener('mousedown', click);
   }, []);
+
+  const toggleThemeHandler = () => {
+    setTheme(toggleTheme());
+  };
 
   useEffect(() => {
     clearTimeout(timer.current);
@@ -117,8 +123,19 @@ export default function TopBar({ onToggleSidebar }) {
         )}
       </div>
 
-      {/* Right actions: Notifications + Avatar */}
+      {/* Right actions: Theme toggle + Notifications + Avatar */}
       <div className="topbar-actions">
+        <button
+          className="icon-btn"
+          onClick={toggleThemeHandler}
+          aria-label={theme === 'dark' ? 'Activar tema claro' : 'Activar tema oscuro'}
+          title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        >
+          <span className="material-symbols-outlined" style={{ color: 'var(--on-surface)' }}>
+            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+
         <NotificationsMenu />
 
         <Link to="/perfil" className="topbar-user" title={`${profile?.email || ''}`}>

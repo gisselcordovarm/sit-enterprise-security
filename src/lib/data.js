@@ -176,11 +176,9 @@ const demoSemana = [
 ]
 
 const demoAlertas = [
-  { id: 'D1', type: 'error', title: 'Fallo de Feat. Técnica', description: 'Pedido #7842: Error de factibilidad técnica en Zona Norte. No hay cobertura de fibra óptica disponible en las coordenadas indicadas.', time: 'Hace 5 min', details: 'Dirección: Av. San Martín 1540. Solicitud cancelada provisionalmente hasta confirmación de antena microondas.' },
-  { id: 'D2', type: 'warning', title: 'Inventario Crítico', description: 'Sensores de movimiento infrarrojos (Ref: PIR-400) por debajo del umbral de seguridad (5 unidades restantes).', time: 'Hace 15 min', details: 'Inventario actual: 3 unidades. Umbral configurado: 10 unidades. Se sugiere reabastecimiento automático.' },
-  { id: 'D3', type: 'success', title: 'Autenticación de Pago', description: 'Pago aprobado para Pedido #7844 (Web) por $350,00 USD. Estado: flag_aprobado = true.', time: 'Hace 30 min', details: 'Transacción ID: TXN-9081273. Procesador: Stripe SIT. Tarjeta terminada en 4821.' },
-  { id: 'D4', type: 'info', title: 'Asignación de Técnico', description: 'Técnico Ariel Ramírez asignado al servicio de instalación en Zona Oeste (Orden #9034).', time: 'Hace 1 hora', details: 'Horario programado: 14:30 hs. Tipo: Instalación Cámaras IP de Alta Seguridad.' },
-  { id: 'D5', type: 'error', title: 'Error de Pago', description: 'Pago rechazado para Pedido #7840 (Call Center). Código: error_pago (Fondos Insuficientes).', time: 'Hace 2 horas', details: 'Cliente: Marcos Silva. Re-intento programado de forma manual en 24 horas.' },
+  { id: 'D1', type: 'warning', title: 'Inventario Crítico', description: 'Sensores de movimiento infrarrojos (Ref: PIR-400) por debajo del umbral de seguridad (5 unidades restantes).', time: 'Hace 15 min', details: 'Inventario actual: 3 unidades. Umbral configurado: 5 unidades. Se sugiere reabastecimiento automático.' },
+  { id: 'D2', type: 'success', title: 'Autenticación de Pago', description: 'Pago aprobado para Pedido #7844 (Web) por $350,00 USD. Estado: flag_aprobado = true.', time: 'Hace 30 min', details: 'Transacción ID: TXN-9081273. Procesador: Stripe SIT. Tarjeta terminada en 4821.' },
+  { id: 'D3', type: 'error', title: 'Error de Pago', description: 'Pago rechazado para Pedido #7840 (Call Center). Error: error_pago (Fondos Insuficientes).', time: 'Hace 2 horas', details: 'Cliente: Marcos Silva. Re-intento programado de forma manual en 24 horas.' },
 ]
 
 // =============================================================================

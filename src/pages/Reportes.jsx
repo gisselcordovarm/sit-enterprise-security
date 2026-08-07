@@ -315,7 +315,7 @@ export default function Reportes() {
           <div
             key={q.modulo}
             style={{
-              background: 'rgba(255, 255, 255, 0.4)',
+              background: 'var(--glass-bg)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: 'none',

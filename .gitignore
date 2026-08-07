@@ -29,3 +29,11 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Documentos generados (informes, exportaciones locales)
+# Se mantienen localmente pero no se versionan en el repositorio.
+# Agregar aqui nuevos documentos que no deben subirse a git.
+INFORME_TECNICO.md
+INFORME_TECNICO.pdf
+GUION_TECNICO_MAESTRO_SIT.md
+GUION_TECNICO_MAESTRO_SIT.pdf
